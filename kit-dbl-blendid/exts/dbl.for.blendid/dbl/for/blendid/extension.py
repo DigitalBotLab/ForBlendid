@@ -1,6 +1,6 @@
 import omni.ext
 import omni.ui as ui
-
+import carb
 
 # Functions and vars are available to other extension as usual in python: `example.python_ext.some_public_function(x)`
 def some_public_function(x: int):
@@ -16,6 +16,12 @@ class DblForBlendidExtension(omni.ext.IExt):
     # this extension is located on filesystem.
     def on_startup(self, ext_id):
         print("[dbl.for.blendid] dbl for blendid startup")
+
+        # set up fps limit
+        carb.settings.get_settings().set_float("/app/runLoops/main/rateLimitFrequency", 30) 
+        carb.settings.get_settings().set_float("/app/runLoops/present/rateLimitFrequency", 30) 
+        carb.settings.get_settings().set_bool("/rtx/ecoMode/enabled", True)
+       
 
         self._count = 0
 
