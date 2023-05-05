@@ -146,7 +146,7 @@
       </material>
     </collision>
   </link>
-
+  
   <joint name="robotiq_outer_finger_joint" type="fixed">
     <origin xyz="0 0.01821998610742 0.0260018192872234" rpy="0 0 0" />
     <parent link="robotiq_outer_knuckle" />
