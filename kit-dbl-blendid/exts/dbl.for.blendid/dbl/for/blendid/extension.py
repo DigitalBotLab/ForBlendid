@@ -2,12 +2,6 @@ import omni.ext
 import omni.ui as ui
 import carb
 
-# Functions and vars are available to other extension as usual in python: `example.python_ext.some_public_function(x)`
-def some_public_function(x: int):
-    print("[dbl.for.blendid] some_public_function was called with x: ", x)
-    return x ** x
-
-
 # Any class derived from `omni.ext.IExt` in top level module (defined in `python.modules` of `extension.toml`) will be
 # instantiated when extension gets enabled and `on_startup(ext_id)` will be called. Later when extension gets disabled
 # on_shutdown() is called.
@@ -21,29 +15,14 @@ class DblForBlendidExtension(omni.ext.IExt):
         carb.settings.get_settings().set_float("/app/runLoops/main/rateLimitFrequency", 30) 
         carb.settings.get_settings().set_float("/app/runLoops/present/rateLimitFrequency", 30) 
         carb.settings.get_settings().set_bool("/rtx/ecoMode/enabled", True)
-       
-
-        self._count = 0
-
-        self._window = ui.Window("My Window", width=300, height=300)
+    
+        self._window = ui.Window("For blendid", width=300, height=300)
         with self._window.frame:
             with ui.VStack():
-                label = ui.Label("")
-
-
-                def on_click():
-                    self._count += 1
-                    label.text = f"count: {self._count}"
-
-                def on_reset():
-                    self._count = 0
-                    label.text = "empty"
-
-                on_reset()
-
-                with ui.HStack():
-                    ui.Button("Add", clicked_fn=on_click)
-                    ui.Button("Reset", clicked_fn=on_reset)
+                ui.Button("Add", height = 20, clicked_fn=self.debug)
 
     def on_shutdown(self):
         print("[dbl.for.blendid] dbl for blendid shutdown")
+
+    def debug(self):
+        print(f"[dbl.for.blendid] debug")
