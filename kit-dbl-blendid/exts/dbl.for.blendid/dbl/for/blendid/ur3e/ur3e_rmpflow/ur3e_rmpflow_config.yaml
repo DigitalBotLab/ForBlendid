@@ -83,11 +83,12 @@ body_cylinders:
       pt1: [0, 0, 0.15]
       pt2: [0, 0, 0]
       radius: .065
+      
 
 body_collision_controllers:
   - name: wrist_2_link
     radius: .04
   - name: wrist_3_link
     radius: .04
-#   - name: tool0
-#     radius: .04
+  - name: tool0
+    radius: .04
