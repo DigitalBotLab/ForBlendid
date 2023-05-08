@@ -6,9 +6,11 @@ from omni.isaac.core.prims import XFormPrim
 
 from .ur3e import UR3E
 from .rmpflow_controller import RMPFlowController
+from .utils import regulate_degree, get_transform_mat_from_pos_rot, generate_slerp_action_sequence
+
+import os
 import numpy as np
 from .numpy_utils import *
-from .utils import regulate_degree, get_transform_mat_from_pos_rot, generate_slerp_action_sequence
 
 
 class Ue3R140Controller(BaseController):
@@ -25,11 +27,14 @@ class Ue3R140Controller(BaseController):
         self.event_pool = [] # event pool
         self.robot = robot
         self.gripper = self.robot.gripper
-        self.cs_controller = RMPFlowController(name="cspace_controller", robot_articulation=self.robot)
+        self.cs_controller = RMPFlowController(name="cspace_controller", 
+                                               robot_articulation=self.robot,
+                                               rmp_config_path=os.path.join(os.path.dirname(__file__), "ur3e_rmpflow/config.json")
+                                               )
         
         # TODO：find height
-        self.ee_pos_target = np.array([0.0, 0.0, 1.0])
-        self.ee_ori_target = np.array([1.0, 0.0, 0.0, 0.0])
+        self.ee_pos_target = np.array([0.45688, 0.22315, 0.06631])
+        self.ee_ori_target = np.array([0.0, 0.0, 0.70711, 0.70711])
 
         # connection
         self.connect_server = connect_server
