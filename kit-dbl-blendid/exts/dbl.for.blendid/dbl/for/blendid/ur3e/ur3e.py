@@ -41,8 +41,8 @@ class UR3E(Robot):
                             "left_inner_finger_joint", "right_inner_finger_joint",
                             ]
         
-        gripper_open_position = np.zeros(6)
-        gripper_closed_position = np.array([0.8757, -0.8757, 0.8757, -0.8757, -0.8757, 0.8757])
+        gripper_open_position = np.array([1, -1, -1, -1, 1, 1]) / -10
+        gripper_closed_position = np.array([1, -1, -1, -1, 1, 1]) / 2.0
         deltas = None # -gripper_closed_position / 5.0
 
         self._gripper = Robotiq140Gripper(
