@@ -94,8 +94,8 @@ class Faucet():
         velocities_list = []
         protoIndices_list = []
 
-        lowerCenter =  Gf.Vec3f(0, -cylinder_height, 0) # self.inflow_position
-        # lowerCenter = self.inflow_position
+        # lowerCenter =  Gf.Vec3f(0, 0, 0) # self.inflow_position
+        lowerCenter = self.inflow_position
 
         particle_rest_offset = self._particleSystemSchemaParameters["fluid_rest_offset"]
     

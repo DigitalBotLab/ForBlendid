@@ -120,12 +120,12 @@ def generate_inside_point_cloud(sphereDiameter, cloud_points, scale = 1):
 
 # generate cylinder points
 def generate_cylinder_y(lowerCenter: Gf.Vec3f, h: float, radius: float, sphereDiameter: float):
-    samples = generate_hcp_samples(Gf.Vec3f(-radius, 0, -radius), Gf.Vec3f(radius, h, radius), sphereDiameter)
+    samples = generate_hcp_samples(Gf.Vec3f(-radius, -radius, 0), Gf.Vec3f(radius, radius, h), sphereDiameter)
 
     finalSamples = []
 
     for p in samples:
-        r2 = p[0] * p[0] + p[2] * p[2]
+        r2 = p[0] * p[0] + p[1] * p[1]
         if r2 <= radius * radius:
             finalSamples.append(p + lowerCenter)
 
