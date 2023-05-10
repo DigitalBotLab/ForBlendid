@@ -31,7 +31,7 @@ class DblForBlendidExtension(omni.ext.IExt):
         self._window = ui.Window("For blendid", width=300, height=300)
         with self._window.frame:
             with ui.VStack():
-                ui.Button("Debug", height = 20, clicked_fn=self.debug)
+                ui.Button("Debug Fluid", height = 20, clicked_fn=self.debug)
 
                 ui.Line(height = 2)
                 ui.Button("Register Physics Event", height = 50, clicked_fn=self.register_physics_event)
@@ -190,3 +190,7 @@ class DblForBlendidExtension(omni.ext.IExt):
 
     def debug(self):
         print(f"[dbl.for.blendid] debug")
+        inflow_path = "/World/Xform"
+        from .fluid.faucet import Faucet
+        self.faucet = Faucet(inflow_path = inflow_path)
+        self.faucet.set_up_cylinder_particles(cylinder_height=0.2, cylinder_radius=0.02)

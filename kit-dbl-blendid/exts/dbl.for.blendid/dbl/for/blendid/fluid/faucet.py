@@ -51,6 +51,7 @@ class Faucet():
         self.stage = omni.usd.get_context().get_stage()
         self.inflow_path = inflow_path
         self.inflow_prim = self.stage.GetPrimAtPath(inflow_path)
+        assert self.inflow_prim.IsValid(), "inflow_path is not valid"
         mat = omni.usd.utils.get_world_transform_matrix(self.inflow_prim) 
         
         # if IS_IN_ISAAC_SIM:
@@ -91,17 +92,13 @@ class Faucet():
         z = [math.cos(ph) * scale for ph in phi]
         points = [Gf.Vec3f(x, y, z) for (x, y, z) in zip(x, y, z)]
         return points
-
-    def create_ball(self, rate = 1):
-        """! create a water drop
-        @param pos: the center of the water drop
-        @param rate: the number of particles for each water drop
-        """
-        # create sphere on points
-        self.set_up_particle_system(rate)
     
-    def set_up_particle_system(self, rate):
-
+    def set_up_cylinder_particles(self, cylinder_height, cylinder_radius):
+        """
+        Set up particle system
+        ::param cylinder_height: the height of the cylinder
+        ::param cylinder_radius: the radius of the cylinder
+        """
 
         self.particleInstanceStr_tmp = self.particleInstanceStr  + "/particlesInstance" + str(self.it)
         particleInstancePath = omni.usd.get_stage_next_free_path(self.stage, self.particleInstanceStr_tmp, False)
@@ -118,9 +115,6 @@ class Faucet():
         velocities_list = []
         protoIndices_list = []
 
-        
-        cylinder_height = 2
-        cylinder_radius = 1.5
         lowerCenter =  Gf.Vec3f(0, -cylinder_height, 0) # self.inflow_position
         # lowerCenter = self.inflow_position
 
@@ -137,14 +131,17 @@ class Faucet():
         protoIndices = pxr.Vt.IntArray(protoIndices_list)
         positions = pxr.Vt.Vec3fArray(positions_list)
         velocities = pxr.Vt.Vec3fArray(velocities_list)
+        widths_list = [particle_rest_offset * 4] * len(positions_list)
 
         print("particleInstancePath", particleInstancePath.pathString)
-        particleUtils.add_physx_particleset_pointinstancer(
-                self.stage,
-                particleInstancePath,
-                positions,
-                velocities,
-                self.particleSystemPath,
+        # add_physx_particleset_pointinstancer
+        particleUtils.add_physx_particleset_points(  
+                stage = self.stage,
+                path = particleInstancePath,
+                positions_list = positions,
+                velocities_list = velocities,
+                widths_list = widths_list,
+                particle_system_path = self.particleSystemPath,
                 self_collision=True,
                 fluid=True,
                 particle_group=0,
@@ -152,15 +149,15 @@ class Faucet():
                 density=0.0,
             )
 
-        prototypePath = particleInstancePath.pathString + "/particlePrototype0"
+        # prototypePath = particleInstancePath.pathString + "/particlePrototype0"
         
 
-        sphere = UsdGeom.Sphere.Define(self.stage, Sdf.Path(prototypePath))
-        spherePrim = sphere.GetPrim()
-        # spherePrim.GetAttribute('visibility').Set('invisible')
-        color_rgb = [207/255.0, 244/255.0, 254/255.0]
-        color = pxr.Vt.Vec3fArray([pxr.Gf.Vec3f(color_rgb[0], color_rgb[1], color_rgb[2])])
-        sphere.CreateDisplayColorAttr(color)
+        # sphere = UsdGeom.Sphere.Define(self.stage, Sdf.Path(prototypePath))
+        # spherePrim = sphere.GetPrim()
+        # # spherePrim.GetAttribute('visibility').Set('invisible')
+        # color_rgb = [207/255.0, 244/255.0, 254/255.0]
+        # color = pxr.Vt.Vec3fArray([pxr.Gf.Vec3f(color_rgb[0], color_rgb[1], color_rgb[2])])
+        # sphere.CreateDisplayColorAttr(color)
 
         # spherePrim.CreateAttribute("enableAnisotropy", Sdf.ValueTypeNames.Bool, True).Set(True)
 
@@ -171,7 +168,7 @@ class Faucet():
         create particle systems
         create isosurface
         """
-        self._setup_callbacks()
+        # self._setup_callbacks()
         
         self.it = 0
         self.counter = 10
@@ -202,12 +199,11 @@ class Faucet():
 
         # Physics scene
         self._gravityMagnitude = gravityMagnitude  
-        self._gravityDirection = Gf.Vec3f(0.0, -1.0, 0.0)
+        self._gravityDirection = Gf.Vec3f(0.0, 0.0, -1.0)
         physicsScenePath = default_prim_path.AppendChild("physicsScene")
         if self.stage.GetPrimAtPath('/World/physicsScene'):
             scene = UsdPhysics.Scene.Get(self.stage, physicsScenePath)
         else:
-            
             scene = UsdPhysics.Scene.Define(self.stage, physicsScenePath)
         scene.CreateGravityDirectionAttr().Set(self._gravityDirection)
         scene.CreateGravityMagnitudeAttr().Set(self._gravityMagnitude)
@@ -255,14 +251,16 @@ class Faucet():
         self._particleSystem = particleUtils.add_physx_particle_system(
                 self.stage, self.particleSystemPath, **self._particleSystemSchemaParameters, simulation_owner=Sdf.Path(self.physicsScenePath.pathString)
             )
-        # addPhysxParticleSystem(
-        #     self.stage, self.particleSystemPath, **self._particleSystemSchemaParameters, \
-        #         scenePath=pxr.Sdf.Path(self.physicsScenePath.pathString)
-        # )
 
-        # particleSystem = self.stage.GetPrimAtPath(self.particleSystemPath)
-        # for key, value in self._particleSystemAttributes.items():
-        #     particleSystem.GetAttribute(key).Set(value)
+        # # add particle anisotropy
+        # particleSystem_prim = self.stage.GetPrimAtPath(self.particleSystemPath)
+        # anisotropyAPI = PhysxSchema.PhysxParticleAnisotropyAPI.Apply(particleSystem_prim)
+        # anisotropyAPI.CreateParticleAnisotropyEnabledAttr().Set(True)
+        # aniso_scale = 2.5
+        # anisotropyAPI.CreateScaleAttr().Set(aniso_scale)
+        # anisotropyAPI.CreateMinAttr().Set(0.3*aniso_scale)
+        # anisotropyAPI.CreateMaxAttr().Set(1.5*aniso_scale)
+
 
         # filterSmooth = 1
         # filtering = 0
@@ -327,7 +325,7 @@ class Faucet():
 
         ##TODO hangle multiple faucet handles
         
-        rate = self.rate_checkers[0].compute_distance()/100.0
+        rate = 0.2 # self.rate_checkers[0].compute_distance()/100.0
         
         if rate > 1:
             rate = 1
