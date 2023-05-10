@@ -1,7 +1,6 @@
 import carb
 import math
 from pathlib import Path
-import pxr
 from pxr import Usd, UsdLux, UsdGeom, Sdf, Gf, Vt, UsdPhysics, PhysxSchema
 import sys
 #put schemaHelpers.py into path
@@ -14,7 +13,7 @@ import math
 
 from .utils import generate_cylinder_y, point_sphere
 from .constants import PARTICLE_PROPERTY, particel_scale
-from omni.physx.scripts import particleUtils
+from omni.physx.scripts import particleUtils, physicsUtils
 
 def setGridFilteringPass(gridFilteringFlags: int, passIndex: int, operation: int, numRepetitions: int = 1):
     """
@@ -54,28 +53,8 @@ class Faucet():
         assert self.inflow_prim.IsValid(), "inflow_path is not valid"
         mat = omni.usd.utils.get_world_transform_matrix(self.inflow_prim) 
         
-        # if IS_IN_ISAAC_SIM:
-        #     from omni.isaac.core.prims import XFormPrim
-        #     self.inflow_position, _ = XFormPrim(self.inflow_path).get_world_pose()
-        #     self.inflow_position = Gf.Vec3f(*self.inflow_position.tolist())
-        # else:
         self.inflow_position = Gf.Vec3f(*mat.ExtractTranslation())
-
-
-        self.link_paths = link_paths
-        self.list_of_point_instancers = []
-        self.active_indexes_for_point_instancers = []
-        self.rate_checkers = []
-        # for link in link_paths:
-        #     path = Path(link)
-        #     self.rate_checkers.append(JointCheck( str(path.parent), str(path.name) ))
-
-        self.create()
-        # print("particleSystemPath", self.particleSystemPath)
     
-    def is_off(self):
-        rate = self.rate_checkers[0].compute_distance()/100.0
-        return rate < 0.1
 
     def point_sphere(self, samples, scale):
         """! create locations for each particles
@@ -93,16 +72,16 @@ class Faucet():
         points = [Gf.Vec3f(x, y, z) for (x, y, z) in zip(x, y, z)]
         return points
     
-    def set_up_cylinder_particles(self, cylinder_height, cylinder_radius):
+    def set_up_cylinder_particles(self, cylinder_height, cylinder_radius, instance_index = 0):
         """
         Set up particle system
         ::param cylinder_height: the height of the cylinder
         ::param cylinder_radius: the radius of the cylinder
         """
 
-        self.particleInstanceStr_tmp = self.particleInstanceStr  + "/particlesInstance" + str(self.it)
+        self.particleInstanceStr_tmp = self.particleInstanceStr  + "/particlesInstance" + str(instance_index)
         particleInstancePath = omni.usd.get_stage_next_free_path(self.stage, self.particleInstanceStr_tmp, False)
-        particleInstancePath = pxr.Sdf.Path(particleInstancePath)
+        particleInstancePath = Sdf.Path(particleInstancePath)
 
         proto = PhysxParticleInstancePrototype()
         proto.selfCollision = True
@@ -123,14 +102,14 @@ class Faucet():
         positions_list = generate_cylinder_y(lowerCenter, h=cylinder_height, radius=cylinder_radius, sphereDiameter=particle_rest_offset * 4.0)
      
         for _ in range(len(positions_list)):
-            velocities_list.append(pxr.Gf.Vec3f(0, 0, 0))
+            velocities_list.append(Gf.Vec3f(0, 0, 0))
             protoIndices_list.append(0)
 
         # print("positions_list", len(positions_list))
         self.positions_list = positions_list
-        protoIndices = pxr.Vt.IntArray(protoIndices_list)
-        positions = pxr.Vt.Vec3fArray(positions_list)
-        velocities = pxr.Vt.Vec3fArray(velocities_list)
+        protoIndices =Vt.IntArray(protoIndices_list)
+        positions =Vt.Vec3fArray(positions_list)
+        velocities =Vt.Vec3fArray(velocities_list)
         widths_list = [particle_rest_offset * 4] * len(positions_list)
 
         print("particleInstancePath", particleInstancePath.pathString)
@@ -156,24 +135,11 @@ class Faucet():
         # spherePrim = sphere.GetPrim()
         # # spherePrim.GetAttribute('visibility').Set('invisible')
         # color_rgb = [207/255.0, 244/255.0, 254/255.0]
-        # color = pxr.Vt.Vec3fArray([pxr.Gf.Vec3f(color_rgb[0], color_rgb[1], color_rgb[2])])
+        # color =Vt.Vec3fArray([Gf.Vec3f(color_rgb[0], color_rgb[1], color_rgb[2])])
         # sphere.CreateDisplayColorAttr(color)
 
         # spherePrim.CreateAttribute("enableAnisotropy", Sdf.ValueTypeNames.Bool, True).Set(True)
 
-
-    def create(self):
-        """! initialize the related parameters for faucet
-        create physics scenes
-        create particle systems
-        create isosurface
-        """
-        # self._setup_callbacks()
-        
-        self.it = 0
-        self.counter = 10
-
-        self.set_up_fluid_physical_scene()
 
     def set_up_fluid_physical_scene(self, gravityMagnitude = 100.0):
         """
@@ -181,7 +147,7 @@ class Faucet():
         """
         default_prim_path = self.stage.GetDefaultPrim().GetPath()
         if default_prim_path.pathString == '':
-            # default_prim_path = pxr.Sdf.Path('/World')
+            # default_prim_path = Sdf.Path('/World')
             root = UsdGeom.Xform.Define(self.stage, "/World").GetPrim()
             self.stage.SetDefaultPrim(root)
             default_prim_path = self.stage.GetDefaultPrim().GetPath()
@@ -251,16 +217,53 @@ class Faucet():
         self._particleSystem = particleUtils.add_physx_particle_system(
                 self.stage, self.particleSystemPath, **self._particleSystemSchemaParameters, simulation_owner=Sdf.Path(self.physicsScenePath.pathString)
             )
+        
+        particleSystem = self.stage.GetPrimAtPath(self.particleSystemPath)
 
-        # # add particle anisotropy
-        # particleSystem_prim = self.stage.GetPrimAtPath(self.particleSystemPath)
-        # anisotropyAPI = PhysxSchema.PhysxParticleAnisotropyAPI.Apply(particleSystem_prim)
-        # anisotropyAPI.CreateParticleAnisotropyEnabledAttr().Set(True)
-        # aniso_scale = 2.5
-        # anisotropyAPI.CreateScaleAttr().Set(aniso_scale)
-        # anisotropyAPI.CreateMinAttr().Set(0.3*aniso_scale)
-        # anisotropyAPI.CreateMaxAttr().Set(1.5*aniso_scale)
+        # Render material
+        mtl_created = []
+        omni.kit.commands.execute(
+            "CreateAndBindMdlMaterialFromLibrary",
+            mdl_name="OmniSurfacePresets.mdl",
+            mtl_name="OmniSurface_Honey",
+            mtl_created_list=mtl_created,
+        )
+        mtl_path = mtl_created[0]
+        omni.kit.commands.execute("BindMaterial", prim_path=self.particleSystemPath, material_path=mtl_path)
 
+        # Create a pbd particle material and set it on the particle system
+        particleUtils.add_pbd_particle_material(self.stage, mtl_path, cohesion=0.3, friction=0.15, viscosity=20.0, surface_tension=0.074, cfl_coefficient=1.0)
+        physicsUtils.add_physics_material_to_prim(self.stage, particleSystem, mtl_path)
+        
+        # add particle anisotropy
+        anisotropyAPI = PhysxSchema.PhysxParticleAnisotropyAPI.Apply(particleSystem)
+        anisotropyAPI.CreateParticleAnisotropyEnabledAttr().Set(True)
+        aniso_scale = 2.5
+        anisotropyAPI.CreateScaleAttr().Set(aniso_scale)
+        anisotropyAPI.CreateMinAttr().Set(0.3*aniso_scale)
+        anisotropyAPI.CreateMaxAttr().Set(1.5*aniso_scale)
+
+        # add particle smoothing
+        smoothingAPI = PhysxSchema.PhysxParticleSmoothingAPI.Apply(particleSystem)
+        smoothingAPI.CreateParticleSmoothingEnabledAttr().Set(True)
+        smoothingAPI.CreateStrengthAttr().Set(0.5)
+
+        # apply isosurface params
+        fluidRestOffset = self._particleSystemSchemaParameters["fluid_rest_offset"]
+        isosurfaceAPI = PhysxSchema.PhysxParticleIsosurfaceAPI.Apply(particleSystem)
+        isosurfaceAPI.CreateIsosurfaceEnabledAttr().Set(True)
+        isosurfaceAPI.CreateMaxVerticesAttr().Set(1024 * 1024)
+        isosurfaceAPI.CreateMaxTrianglesAttr().Set(2 * 1024 * 1024)
+        isosurfaceAPI.CreateMaxSubgridsAttr().Set(1024 * 4)
+        #isosurfaceAPI.CreateGridSpacingAttr().Set(fluidRestOffset*0.9)
+        #isosurfaceAPI.CreateSurfaceDistanceAttr().Set(fluidRestOffset*0.95)
+        # isosurfaceAPI.CreateGridFilteringPassesAttr().Set("GS")
+        isosurfaceAPI.CreateGridSmoothingRadiusAttr().Set(fluidRestOffset*1.0)
+        isosurfaceAPI.CreateNumMeshSmoothingPassesAttr().Set(4)
+        isosurfaceAPI.CreateNumMeshNormalSmoothingPassesAttr().Set(4)
+
+        # primVarsApi = UsdGeom.PrimvarsAPI(particleSystem)
+        # primVarsApi.CreatePrimvar("doNotCastShadows", Sdf.ValueTypeNames.Bool).Set(True)
 
         # filterSmooth = 1
         # filtering = 0
@@ -355,7 +358,7 @@ class Faucet():
         self.it = self.it + 1
 
 
-        self.create_ball(rate)
+        # self.create_ball(rate)
 
     def __del__(self):
         self._physics_update_subscription = None
