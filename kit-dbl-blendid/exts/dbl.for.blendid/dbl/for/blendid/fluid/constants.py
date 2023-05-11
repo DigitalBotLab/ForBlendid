@@ -1,5 +1,5 @@
 from pxr import Gf
-particel_scale = 0.01
+particel_scale = 0.02
 
 class PARTICLE_PROPERTY:
     _fluidSphereDiameter = 0.24 * particel_scale
