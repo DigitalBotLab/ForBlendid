@@ -40,33 +40,45 @@ action_config = {
             },
             {
                 'action_type': 'move',
-                'duration': 200,
-                'position': [0, -0.2, 0.2],
+                'duration': 100,
+                'position': [0, -0.3, 0.15],
                 'orientation': [-0.5, 0.5, 0.5, 0.5],
-            },
-
-            # {
-            #     'action_type': 'move',
-            #     'duration': 200,
-            #     'position': [0, -0.3, 0.15],
-            #     'orientation': [-0.5, 0.5, 0.5, 0.5],
-            # },
-            # {
-            #     'action_type': 'close',
-            #     'duration': 100,
-            #     'ratio': 0.8,
-            # },
-            # {
-            #     'action_type': 'move',
-            #     'duration': 200,
-            #     'position': [0.3, -0.5, 0.3],
-            #     'orientation': [0, 0.7071, 0.7071, 0],
-            # },
-           
+            },           
         ]
     },
 
-    
+    "place_blender_to_blending_point": {
+        'base_prim': '/World/WorkingArea/BlendingArea/BlendingPoint0',
+        'steps':[
+            {
+                'action_type': 'move',
+                'duration': 200,
+                'position': [0, -0.3, 0.1],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },   
+            {
+                'action_type': 'move',
+                'duration': 200,
+                'position': [0, -0.2, 0.1],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },   
+            {
+                'action_type': 'open',
+                'duration': 60,
+                'ratio': None,
+            },
+            {
+                'action_type': 'move',
+                'duration': 200,
+                'position': [0, -0.3, 0.1],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },   
+        ]
+    },
+
+
+
+############################################################################################
     "close_coffee_machine_handle": {
         'base_prim': '/World/Keurig_1_5_add_hold/XformHandle',
         'steps':[

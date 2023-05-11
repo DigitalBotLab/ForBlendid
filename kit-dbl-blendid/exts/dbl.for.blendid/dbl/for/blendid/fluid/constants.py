@@ -1,5 +1,5 @@
 from pxr import Gf
-particel_scale = 0.02
+particel_scale = 0.03
 
 class PARTICLE_PROPERTY:
     _fluidSphereDiameter = 0.24 * particel_scale
@@ -7,7 +7,7 @@ class PARTICLE_PROPERTY:
         "contact_offset": 0.3 * particel_scale,
         "particle_contact_offset": 0.25 * particel_scale,
         "rest_offset": 0.25 * particel_scale,
-        "solid_rest_offset": 0,
+        "solid_rest_offset": 0, #0.005 * particel_scale,
         "fluid_rest_offset": 0.5 * _fluidSphereDiameter + 0.03 * particel_scale,
         "solver_position_iterations": 10,
         "wind": Gf.Vec3f(0, 0, 0),

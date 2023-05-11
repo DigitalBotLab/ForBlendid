@@ -211,10 +211,12 @@ class DblForBlendidExtension(omni.ext.IExt):
         from .fluid.faucet import Faucet
         self.faucet = Faucet(inflow_path = inflow_path)
         self.faucet.set_up_fluid_physical_scene()
-        self.faucet.set_up_cylinder_particles(cylinder_height=3.0, cylinder_radius=0.03)
+        self.faucet.set_up_cylinder_particles(cylinder_height=1.5, cylinder_radius=0.02)
 
 
     def debug(self):
         print("debug")
         if self.controller:
-            self.controller.apply_high_level_action("pick_up_blender")
+            #  pick_up_blender
+            self.controller.apply_high_level_action("pick_up_blender") 
+            self.controller.apply_high_level_action("place_blender_to_blending_point") 
