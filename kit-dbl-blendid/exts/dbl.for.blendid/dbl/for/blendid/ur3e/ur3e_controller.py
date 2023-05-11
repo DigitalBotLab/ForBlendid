@@ -11,7 +11,7 @@ from .utils import regulate_degree, get_transform_mat_from_pos_rot, generate_sle
 import os
 import numpy as np
 from .numpy_utils import *
-
+from .action_config import action_config
 
 class Ue3R140Controller(BaseController):
     def __init__(self, name: str, robot: UR3E, connect_server = False) -> None: 
@@ -65,95 +65,65 @@ class Ue3R140Controller(BaseController):
             self.event = event
             self.total_event_count = 0
 
-################################## sync robot ##################################
-    # def synchronize_robot(self):
-    #     """
-    #     Send message to the Server to 
-    #     """
-    #     if not self.sending_message:
-    #         # get joint positions and gripper degree
-    #         all_positions = self.robot.get_joint_positions()
-    #         gripper_degree = all_positions[7] / 0.8757
-    #         joint_positions = [regulate_degree(e, indegree=False) for e in all_positions[:7]]
-    #         joint_positions = joint_positions + [gripper_degree]
 
-    #         assert len(joint_positions) == 8, "Invalid number of joint positions"
-
-    #         # send message
-    #         message = " ".join([str(e) for e in joint_positions])
+    def apply_high_level_action(self, action_name: str = "go_home"):
+        """
+        Apply high-level action to the robot
+        """
+        action = action_config[action_name]
+        if action['base_prim'] is None:
+            base_world_pos, base_world_rot = self.robot.get_world_pose()
+        else:
+            base_prim = XFormPrim(action['base_prim'])
+            base_world_pos, base_world_rot = base_prim.get_world_pose()
         
-    #         self.sending_message = True
-    #         self.client.send_message("Control", message)
-    #         self.sending_message = False
-
-    # def obtain_robot_state(self):
-    #     """
-    #     Get robot state from the Server
-    #     """
-    #     if not self.sending_message:
-    #         self.sending_message = True
-    #         answer_message = self.client.send_message("GetJoints", "NA")
-    #         self.sending_message = False
-    #         return [float(e) for e in answer_message.split(" ")]
-
-    # def apply_high_level_action(self, action_name: str = "go_home"):
-    #     """
-    #     Apply high-level action to the robot
-    #     """
-    #     action = kinova_action_config[action_name]
-    #     if action['base_prim'] is None:
-    #         base_world_pos, base_world_rot = self.robot.get_world_pose()
-    #     else:
-    #         base_prim = XFormPrim(action['base_prim'])
-    #         base_world_pos, base_world_rot = base_prim.get_world_pose()
+        base_mat = get_transform_mat_from_pos_rot(base_world_pos, base_world_rot)
+        print("base_mat", base_mat)
         
-    #     base_mat = get_transform_mat_from_pos_rot(base_world_pos, base_world_rot)
-    #     print("base_mat", base_mat)
-        
-    #     for action_step in action['steps']:
+        for action_step in action['steps']:
 
-    #         step_type = action_step['action_type']
-    #         duration = action_step['duration']
+            step_type = action_step['action_type']
+            duration = action_step['duration']
 
-    #         if step_type == "move":
-    #             offset_mat = get_transform_mat_from_pos_rot(action_step['position'], action_step['orientation'])
-    #             print("offset_mat", offset_mat)
+            if step_type == "move":
+                offset_mat = get_transform_mat_from_pos_rot(action_step['position'], action_step['orientation'])
+                print("offset_mat", offset_mat)
 
-    #             target_mat = offset_mat * base_mat 
-    #             print("target_mat", target_mat.ExtractTranslation(), target_mat.ExtractRotationQuat())
+                target_mat = offset_mat * base_mat 
+                print("target_mat", target_mat.ExtractTranslation(), target_mat.ExtractRotationQuat())
 
-    #             target_pos = target_mat.ExtractTranslation()
-    #             target_rot = target_mat.ExtractRotationQuat()
+                target_pos = target_mat.ExtractTranslation()
+                target_rot = target_mat.ExtractRotationQuat()
 
-    #             pos_array = np.array([target_pos[0], target_pos[1], target_pos[2]])
-    #             rot_array = np.array([target_rot.GetReal(), target_rot.GetImaginary()[0], target_rot.GetImaginary()[1], target_rot.GetImaginary()[2]])
+                pos_array = np.array([target_pos[0], target_pos[1], target_pos[2]])
+                rot_array = np.array([target_rot.GetReal(), target_rot.GetImaginary()[0], target_rot.GetImaginary()[1], target_rot.GetImaginary()[2]])
 
-    #             self.add_event_to_pool(step_type, duration, pos_array, rot_array)
-    #         elif step_type in ["close", "open"]: 
-    #             gripper_ratio = action_step['ratio']
-    #             self.add_event_to_pool(step_type, duration, None, None, gripper_ratio)
-    #         elif step_type == "slerp":
-    #             slerp_action_sequence = generate_slerp_action_sequence(
-    #                 action_step['position'], 
-    #                 action_step['orientation'],
-    #                 action_step['relative_rotation'], 
-    #                 sub_steps=action_step['sub_steps'],
-    #                 sub_duration=action_step['duration'] // action_step['sub_steps'],
-    #                 slerp_last=action_step['slerp_last'],
-    #                 slerp_offset=action_step['slerp_offset']
-    #                 )
+                self.add_event_to_pool(step_type, duration, pos_array, rot_array)
+            elif step_type in ["close", "open"]: 
+                gripper_ratio = action_step['ratio']
+                self.add_event_to_pool(step_type, duration, None, None, gripper_ratio)
+            elif step_type == "slerp":
+                slerp_action_sequence = generate_slerp_action_sequence(
+                    action_step['position'], 
+                    action_step['orientation'],
+                    action_step['relative_rotation'], 
+                    sub_steps=action_step['sub_steps'],
+                    sub_duration=action_step['duration'] // action_step['sub_steps'],
+                    slerp_last=action_step['slerp_last'],
+                    slerp_offset=action_step['slerp_offset']
+                    )
 
-    #             print("action_sequence", slerp_action_sequence)
-    #             for sub_action in slerp_action_sequence:
-    #                 offset_mat = get_transform_mat_from_pos_rot(sub_action['position'], sub_action['orientation'])
-    #                 target_mat = offset_mat * base_mat 
-    #                 target_pos = target_mat.ExtractTranslation()
-    #                 target_rot = target_mat.ExtractRotationQuat()
+                print("action_sequence", slerp_action_sequence)
+                for sub_action in slerp_action_sequence:
+                    offset_mat = get_transform_mat_from_pos_rot(sub_action['position'], sub_action['orientation'])
+                    target_mat = offset_mat * base_mat 
+                    target_pos = target_mat.ExtractTranslation()
+                    target_rot = target_mat.ExtractRotationQuat()
 
-    #                 pos_array = np.array([target_pos[0], target_pos[1], target_pos[2]])
-    #                 rot_array = np.array([target_rot.GetReal(), target_rot.GetImaginary()[0], target_rot.GetImaginary()[1], target_rot.GetImaginary()[2]])
+                    pos_array = np.array([target_pos[0], target_pos[1], target_pos[2]])
+                    rot_array = np.array([target_rot.GetReal(), target_rot.GetImaginary()[0], target_rot.GetImaginary()[1], target_rot.GetImaginary()[2]])
 
-    #                 self.add_event_to_pool(sub_action['action_type'], sub_action['duration'], pos_array, rot_array)
+                    self.add_event_to_pool(sub_action['action_type'], sub_action['duration'], pos_array, rot_array)
 
 
     def forward(self):
@@ -170,6 +140,8 @@ class Ue3R140Controller(BaseController):
                     self.update_ee_target(ee_pos, ee_ori)
                 elif self.event == "close":
                     self.gripper.set_close_ratio(gripper_ratio)
+                elif self.event == "open":
+                    self.gripper.set_close_ratio(1.0)
                 
 
                 if self.connect_server:
@@ -214,5 +186,37 @@ class Ue3R140Controller(BaseController):
 
 
         # return actions
+
+    ################################## sync robot ##################################
+    # def synchronize_robot(self):
+    #     """
+    #     Send message to the Server to 
+    #     """
+    #     if not self.sending_message:
+    #         # get joint positions and gripper degree
+    #         all_positions = self.robot.get_joint_positions()
+    #         gripper_degree = all_positions[7] / 0.8757
+    #         joint_positions = [regulate_degree(e, indegree=False) for e in all_positions[:7]]
+    #         joint_positions = joint_positions + [gripper_degree]
+
+    #         assert len(joint_positions) == 8, "Invalid number of joint positions"
+
+    #         # send message
+    #         message = " ".join([str(e) for e in joint_positions])
+        
+    #         self.sending_message = True
+    #         self.client.send_message("Control", message)
+    #         self.sending_message = False
+
+    # def obtain_robot_state(self):
+    #     """
+    #     Get robot state from the Server
+    #     """
+    #     if not self.sending_message:
+    #         self.sending_message = True
+    #         answer_message = self.client.send_message("GetJoints", "NA")
+    #         self.sending_message = False
+    #         return [float(e) for e in answer_message.split(" ")]
+
     
     

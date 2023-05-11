@@ -24,14 +24,16 @@ class DblForBlendidExtension(omni.ext.IExt):
         print("[dbl.for.blendid] dbl for blendid startup")
 
         # set up fps limit
-        carb.settings.get_settings().set_float("/app/runLoops/main/rateLimitFrequency", 30) 
-        carb.settings.get_settings().set_float("/app/runLoops/present/rateLimitFrequency", 30) 
+        carb.settings.get_settings().set_float("/app/runLoops/main/rateLimitFrequency", 25) 
+        carb.settings.get_settings().set_float("/app/runLoops/present/rateLimitFrequency", 25) 
         carb.settings.get_settings().set_bool("/rtx/ecoMode/enabled", True)
     
         self._window = ui.Window("For blendid", width=300, height=300)
         with self._window.frame:
             with ui.VStack():
-                ui.Button("Debug Fluid", height = 20, clicked_fn=self.debug)
+                ui.Button("Debug", height = 20, clicked_fn=self.debug)
+
+                ui.Button("Add Fluid", height = 20, clicked_fn=self.fluid_test)
 
                 ui.Line(height = 2)
                 ui.Button("Register Physics Event", height = 50, clicked_fn=self.register_physics_event)
@@ -45,14 +47,14 @@ class DblForBlendidExtension(omni.ext.IExt):
                 with ui.HStack(height = 20):
                     self.ee_pos_widget = CustomMultifieldWidget(
                         label="Transform",
-                        default_vals=[0, 0, 0],
+                        default_vals=[0.4, 0.2, 0.3],
                         height = 20,
                     )
                 ui.Spacer(height = 9)
                 with ui.HStack(height = 20):
                     self.ee_ori_widget = CustomMultifieldWidget(
                         label="Orient (Euler)",
-                        default_vals=[90, 0.0, 90],
+                        default_vals=[0, 0.0, 0],
                         height = 20,
                     )
                 ui.Spacer(height = 9)
@@ -165,6 +167,21 @@ class DblForBlendidExtension(omni.ext.IExt):
 
     def update_ee_target(self):
         print("update_ee_target")
+        from .ur3e.numpy_utils import euler_angles_to_quat
+        if self.controller:
+            self.controller.update_event("move")
+            # current_pos, current_rot = self.robot.end_effector.get_world_pose()
+            pos = [self.ee_pos_widget.multifields[i].model.as_float for i in range(3)]
+            rot = [self.ee_ori_widget.multifields[i].model.as_float for i in range(3)]
+            
+            pos =  np.array(pos) # + np.array(current_pos)
+            rot = euler_angles_to_quat(rot, degrees=True) # xyzw
+            # current_rot = np.array([current_rot[1], current_rot[2], current_rot[3], current_rot[0]])
+            # rot = quat_mul(current_rot, rot)
+            rot = np.array([rot[3], rot[0], rot[1], rot[2]]) # wxyz
+
+            print("updating controller ee target:", pos, rot)
+            self.controller.update_ee_target(pos, rot)
 
     def toggle_gripper(self):
         print("Toggle Gripper")
@@ -188,10 +205,16 @@ class DblForBlendidExtension(omni.ext.IExt):
         # print("rot_euler:", rot_euler)
         # self.ee_ori_euler_read_widget.update(rot_euler[0])
 
-    def debug(self):
+    def fluid_test(self):
         print(f"[dbl.for.blendid] debug")
         inflow_path = "/World/Xform"
         from .fluid.faucet import Faucet
         self.faucet = Faucet(inflow_path = inflow_path)
         self.faucet.set_up_fluid_physical_scene()
         self.faucet.set_up_cylinder_particles(cylinder_height=3.0, cylinder_radius=0.03)
+
+
+    def debug(self):
+        print("debug")
+        if self.controller:
+            self.controller.apply_high_level_action("pick_up_blender")
