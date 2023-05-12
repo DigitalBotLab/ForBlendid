@@ -67,14 +67,14 @@ class Faucet():
         points = [Gf.Vec3f(x, y, z) for (x, y, z) in zip(x, y, z)]
         return points
     
-    def set_up_cylinder_particles(self, cylinder_height, cylinder_radius, instance_index = 0):
+    def set_up_cylinder_particles(self, cylinder_height, cylinder_radius):
         """
         Set up particle system
         ::param cylinder_height: the height of the cylinder
         ::param cylinder_radius: the radius of the cylinder
         """
 
-        self.particleInstanceStr_tmp = self.particleInstanceStr  + "/particlesInstance" + str(instance_index)
+        self.particleInstanceStr_tmp = self.particleInstanceStr  + "/particlesInstance"
         particleInstancePath = omni.usd.get_stage_next_free_path(self.stage, self.particleInstanceStr_tmp, False)
         particleInstancePath = Sdf.Path(particleInstancePath)
 
@@ -136,24 +136,17 @@ class Faucet():
         # spherePrim.CreateAttribute("enableAnisotropy", Sdf.ValueTypeNames.Bool, True).Set(True)
 
 
-    def set_up_fluid_physical_scene(self, gravityMagnitude = 100.0):
+    def set_up_fluid_particle_system(self, instance_index = 0):
         """
         Fluid / PhysicsScene
         """
-        default_prim_path = self.stage.GetDefaultPrim().GetPath()
-        if default_prim_path.pathString == '':
-            # default_prim_path = Sdf.Path('/World')
-            root = UsdGeom.Xform.Define(self.stage, "/World").GetPrim()
-            self.stage.SetDefaultPrim(root)
-            default_prim_path = self.stage.GetDefaultPrim().GetPath()
 
         self.stage = omni.usd.get_context().get_stage()
         
-        particleSystemStr = default_prim_path.AppendPath("Fluid").pathString
-        self.physicsScenePath = default_prim_path.AppendChild("physicsScene")
-        self.particleSystemPath = Sdf.Path(particleSystemStr)
+        self.physicsScenePath = "/World/physicsScene"
+        self.particleSystemPath = Sdf.Path(f"/World/Fluid/particleSystem{instance_index}")
         
-        self.particleInstanceStr = "/World/game/inflow"
+        self.particleInstanceStr = f"/World/Fluid/particleSystem{instance_index}"
 
         # print("particleInstanceStr", self.particleInstanceStr)
 
@@ -209,7 +202,7 @@ class Faucet():
         self._particleSystemAttributes["maxParticles"] = 2000
         self._particleSystemAttributes["viscosity"] = 0.001
         self._particleSystem = particleUtils.add_physx_particle_system(
-                self.stage, self.particleSystemPath, **self._particleSystemSchemaParameters, simulation_owner=Sdf.Path(self.physicsScenePath.pathString)
+                self.stage, self.particleSystemPath, **self._particleSystemSchemaParameters, simulation_owner=Sdf.Path(self.physicsScenePath)
             )
         
         particleSystem = self.stage.GetPrimAtPath(self.particleSystemPath)

@@ -209,11 +209,15 @@ class DblForBlendidExtension(omni.ext.IExt):
 
     def fluid_test(self):
         print(f"[dbl.for.blendid] debug")
-        inflow_path = "/World/blender/juice_point" #"/World/Xform"
+         #"/World/Xform"
         from .fluid.faucet import Faucet
-        self.faucet = Faucet(inflow_path = inflow_path)
-        self.faucet.set_up_fluid_physical_scene()
-        self.faucet.set_up_cylinder_particles(cylinder_height=1.5, cylinder_radius=0.02)
+        # faucet = Faucet(inflow_path = inflow_path)
+        # faucet.set_up_fluid_particle_system()
+        # faucet.set_up_cylinder_particles(cylinder_height=1.5, cylinder_radius=0.02)
+
+        faucet = Faucet(material_name = "OmniSurface_ClearWater", inflow_path = "/World/blender/juice_point")
+        faucet.set_up_fluid_particle_system(instance_index=1)
+        faucet.set_up_cylinder_particles(cylinder_height=0.5, cylinder_radius=0.03)
 
 
     def fruit_test(self):
