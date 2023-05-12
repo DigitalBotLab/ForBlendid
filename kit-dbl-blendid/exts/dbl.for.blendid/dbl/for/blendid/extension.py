@@ -4,6 +4,7 @@ import omni.timeline
 import omni.kit.app
 import carb
 import numpy as np
+import asyncio
 
 # UI
 from .ui.style import julia_modeler_style
@@ -32,9 +33,11 @@ class DblForBlendidExtension(omni.ext.IExt):
         with self._window.frame:
             with ui.VStack():
                 ui.Button("Debug", height = 20, clicked_fn=self.debug)
-                ui.Line(height = 2)
-                ui.Button("Add Fruit", height = 20, clicked_fn=self.fruit_test)
 
+                ui.Line(height = 6)
+                ui.Button("Add Fruit", height = 20, clicked_fn=self.fruit_add)
+                ui.Button("Delete Fruit", height = 20, clicked_fn=self.fruit_delete)
+                ui.Line(height = 6)
                 ui.Button("Add Fluid", height = 20, clicked_fn=self.fluid_test)
 
                 ui.Line(height = 2)
@@ -215,41 +218,34 @@ class DblForBlendidExtension(omni.ext.IExt):
         # faucet.set_up_fluid_particle_system()
         # faucet.set_up_cylinder_particles(cylinder_height=1.5, cylinder_radius=0.02)
 
-        faucet = Faucet(material_name = "OmniSurface_ClearWater", inflow_path = "/World/blender/juice_point")
+        faucet = Faucet(material_name = "OmniSurface_Honey", inflow_path = "/World/blender/juice_point")
         faucet.set_up_fluid_particle_system(instance_index=1)
-        faucet.set_up_cylinder_particles(cylinder_height=0.5, cylinder_radius=0.03)
+        faucet.set_up_cylinder_particles(cylinder_height=0.4, cylinder_radius=0.04)
 
 
-    def fruit_test(self):
+    def fruit_add(self):
 
         print("fruit_test")
-        # self.stage = omni.usd.get_context().get_stage()
-        # # move obj to the correct place
-        # fruit_prim_path = "/World/layout"
-        # fruit_prim = self.stage.GetPrimAtPath(fruit_prim_path)
-        # if not fruit_prim.IsValid():
-        #     fruit_prim = self.stage.DefinePrim(fruit_prim_path)
-
-            
-        # from .ur3e.utils import EXTENSION_FOLDER_PATH
-        # import os
-        # fruit_path = os.path.join(EXTENSION_FOLDER_PATH,"../../../Models/Fruit/strawberry.usd")
-        # print("EXTENSION_FOLDER_PATH", fruit_path)
-
-        # success_bool = fruit_prim.GetPayloads().AddPayload(fruit_path)
-        # assert success_bool, "failed to add payload"
-        # success_bool = fruit_prim.GetReferences().AddReference(fruit_path)  
-
         from .rigid.baseket import Basket
-        basket = Basket(item_file_name="strawberry.usd", generate_path="/World/Fruit")
-        print("baseket", basket.generate_path)
-        basket.generate_item(item_name="strawberry", item_num=50, item_scale=1e-4)
+        self.basket1 = Basket(item_file_name="strawberry", point_path="/World/WorkingArea/FruitArea/FruitPoint0")
+        print("baseket", self.basket1.point_path)
+        self.basket1.generate_item(item_num=20, item_scale=1e-4)
+
+    def fruit_delete(self):
+        print("fruit_delete")
+        self.basket1.delete_item()
 
     def debug(self):
         print("debug")
         if self.controller:
             #  pick_up_blender
-            self.controller.apply_high_level_action("pick_up_blender") 
+            from .ur3e.action_config import action_config
+
+            self.controller.apply_high_level_action(action_config["pick_up_blender"]) 
+
+            place_action = action_config["place_blender_to_point"]
+            place_action["base_prim"] = "/World/WorkingArea/FruitArea/FruitPoint0"
+            self.controller.apply_high_level_action(place_action)
             # self.controller.apply_high_level_action("place_blender_to_blending_point")        
             # self.controller.apply_high_level_action("pick_up_cup")            
             # self.controller.apply_high_level_action("place_cup")

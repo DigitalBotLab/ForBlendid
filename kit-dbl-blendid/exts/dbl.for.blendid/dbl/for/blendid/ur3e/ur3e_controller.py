@@ -12,7 +12,6 @@ from .utils import regulate_degree, get_transform_mat_from_pos_rot, generate_sle
 import os
 import numpy as np
 from .numpy_utils import *
-from .action_config import action_config
 
 class Ue3R140Controller(BaseController):
     def __init__(self, name: str, robot: UR3E, connect_server = False) -> None: 
@@ -75,21 +74,20 @@ class Ue3R140Controller(BaseController):
             self.total_event_count = 0
 
 
-    def apply_high_level_action(self, action_name: str = "go_home"):
+    def apply_high_level_action(self, high_level_action):
         """
         Apply high-level action to the robot
         """
-        action = action_config[action_name]
-        if action['base_prim'] is None:
+        if high_level_action['base_prim'] is None:
             base_world_pos, base_world_rot = self.robot.get_world_pose()
         else:
-            base_prim = XFormPrim(action['base_prim'])
+            base_prim = XFormPrim(high_level_action['base_prim'])
             base_world_pos, base_world_rot = base_prim.get_world_pose()
         
         base_mat = get_transform_mat_from_pos_rot(base_world_pos, base_world_rot)
         print("base_mat", base_mat)
         
-        for action_step in action['steps']:
+        for action_step in high_level_action['steps']:
 
             step_type = action_step['action_type']
             duration = action_step['duration']
@@ -133,7 +131,10 @@ class Ue3R140Controller(BaseController):
                     rot_array = np.array([target_rot.GetReal(), target_rot.GetImaginary()[0], target_rot.GetImaginary()[1], target_rot.GetImaginary()[2]])
 
                     self.add_event_to_pool(sub_action['action_type'], sub_action['duration'], pos_array, rot_array)
-            
+            elif step_type == "wait":
+                self.add_event_to_pool(step_type, duration, None, None)
+
+            # FIXME: fix low-level action
             elif step_type == "low_level":
                 """
                 Perform low-level action
@@ -154,6 +155,7 @@ class Ue3R140Controller(BaseController):
                 event, elapsed, ee_pos, ee_ori, gripper_ratio = self.event_pool.pop(0)
                 # print("event, elapsed, ee_pos, ee_ori ", event, elapsed, ee_pos, ee_ori, gripper_ratio)
                 self.update_event(event)
+                self.event_elapsed = elapsed
                 if self.event == "move":
                     self.update_ee_target(ee_pos, ee_ori)
                 elif self.event == "close":
@@ -162,12 +164,11 @@ class Ue3R140Controller(BaseController):
                     self.gripper.set_close_ratio(1.0)
                 elif self.event == "low_level":
                     self.update_joint_target(ee_pos)
-                
 
                 if self.connect_server:
                     self.synchronize_robot()
 
-                self.event_elapsed = elapsed
+                
         else:
             if self.connect_server:
                 if self.total_event_count > 200 and self.total_event_count % (60 * 3) == 0:
@@ -182,6 +183,10 @@ class Ue3R140Controller(BaseController):
             actions = self.gripper.forward(action="close")
         elif self.event == "open":
             actions = self.gripper.forward(action="open")
+        elif self.event == "wait":
+            return
+        
+        # FIXME: fix low-level action
         elif self.event == "low_level":
             joint_positions = self.robot.get_joint_positions()
             a = self.event_elapsed / 200

@@ -29,7 +29,7 @@ action_config = {
             },
             {
                 'action_type': 'move',
-                'duration': 200,
+                'duration': 100,
                 'position': [0, -0.2, 0.1],
                 'orientation': [-0.5, 0.5, 0.5, 0.5],
             },
@@ -47,7 +47,7 @@ action_config = {
         ]
     },
 
-    "place_blender_to_blending_point": {
+    "place_blender_to_point": {
         'base_prim': '/World/WorkingArea/BlendingArea/BlendingPoint0',
         'steps':[
             {
@@ -73,7 +73,10 @@ action_config = {
                 'position': [0, -0.3, 0.1],
                 'orientation': [-0.5, 0.5, 0.5, 0.5],
             },   
-            
+            {
+                'action_type': 'wait',
+                'duration': 100,
+            },
         ]
     },
 
