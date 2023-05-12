@@ -163,19 +163,18 @@ class Faucet():
         # print("particleInstanceStr", self.particleInstanceStr)
 
 
-        # Physics scene
-        self._gravityMagnitude = gravityMagnitude  
-        self._gravityDirection = Gf.Vec3f(0.0, 0.0, -1.0)
-        physicsScenePath = default_prim_path.AppendChild("physicsScene")
+        # # Physics scene
+        # self._gravityMagnitude = gravityMagnitude  
+        # self._gravityDirection = Gf.Vec3f(0.0, 0.0, -1.0)
         if self.stage.GetPrimAtPath('/World/physicsScene'):
-            scene = UsdPhysics.Scene.Get(self.stage, physicsScenePath)
+            scene = UsdPhysics.Scene.Get(self.stage, self.physicsScenePath)
         else:
-            scene = UsdPhysics.Scene.Define(self.stage, physicsScenePath)
-        scene.CreateGravityDirectionAttr().Set(self._gravityDirection)
-        scene.CreateGravityMagnitudeAttr().Set(self._gravityMagnitude)
-        physxSceneAPI = PhysxSchema.PhysxSceneAPI.Apply(scene.GetPrim())
-        physxSceneAPI.CreateEnableCCDAttr().Set(True)
-        physxSceneAPI.GetTimeStepsPerSecondAttr().Set(120)
+            scene = UsdPhysics.Scene.Define(self.stage, self.physicsScenePath)
+        # scene.CreateGravityDirectionAttr().Set(self._gravityDirection)
+        # scene.CreateGravityMagnitudeAttr().Set(self._gravityMagnitude)
+        # physxSceneAPI = PhysxSchema.PhysxSceneAPI.Apply(scene.GetPrim())
+        # physxSceneAPI.CreateEnableCCDAttr().Set(True)
+        # physxSceneAPI.GetTimeStepsPerSecondAttr().Set(120)
 
 
 

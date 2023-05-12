@@ -34,7 +34,7 @@ class Ue3R140Controller(BaseController):
         
         # TODO：find height
         self.ee_pos_target = np.array([0.4, 0.2, 0.3])
-        self.ee_ori_target = np.array([0.0, 0.0, 0.70711, 0.70711])
+        self.ee_ori_target = np.array([0.0, -1, 0, 0])
 
         # connection
         self.connect_server = connect_server

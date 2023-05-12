@@ -207,7 +207,7 @@ class DblForBlendidExtension(omni.ext.IExt):
 
     def fluid_test(self):
         print(f"[dbl.for.blendid] debug")
-        inflow_path = "/World/Xform"
+        inflow_path = "/World/blender/juice_point" #"/World/Xform"
         from .fluid.faucet import Faucet
         self.faucet = Faucet(inflow_path = inflow_path)
         self.faucet.set_up_fluid_physical_scene()
@@ -218,5 +218,6 @@ class DblForBlendidExtension(omni.ext.IExt):
         print("debug")
         if self.controller:
             #  pick_up_blender
-            self.controller.apply_high_level_action("pick_up_blender") 
-            self.controller.apply_high_level_action("place_blender_to_blending_point") 
+            # self.controller.apply_high_level_action("pick_up_blender") 
+            # self.controller.apply_high_level_action("place_blender_to_blending_point")        
+            self.controller.apply_high_level_action("place_cup")

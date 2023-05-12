@@ -73,9 +73,56 @@ action_config = {
                 'position': [0, -0.3, 0.1],
                 'orientation': [-0.5, 0.5, 0.5, 0.5],
             },   
+            
         ]
     },
 
+    "pick_up_cup": {
+        'base_prim': '/World/Cup/cup_00',
+        'steps':[
+            {
+                'action_type': 'move',
+                'duration': 200,
+                'position': [0, -0.3, 0.05],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },   
+            {
+                'action_type': 'move',
+                'duration': 100,
+                'position': [0, -0.2, 0.05],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },   
+            {
+                'action_type': 'close',
+                'duration': 60,
+                'ratio': 0.7,
+            },
+            {
+                'action_type': 'move',
+                'duration': 100,
+                'position': [0, -0.2, 0.0],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },  
+            {
+                'action_type': 'move',
+                'duration': 100,
+                'position': [0, -0.4, 0.0],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },  
+        ]
+    },
+
+    "place_cup": {
+        'base_prim': '/World/WorkingArea/FrontAreaTop/CupPoint0',
+        'steps':[
+            {
+                'action_type': 'move',
+                'duration': 200,
+                'position': [0, -0.3, 0.05],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },   
+        ]
+    },
 
 
 ############################################################################################
