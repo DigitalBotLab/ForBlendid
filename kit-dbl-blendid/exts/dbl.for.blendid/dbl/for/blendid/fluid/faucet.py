@@ -27,7 +27,7 @@ def setGridFilteringPass(gridFilteringFlags: int, passIndex: int, operation: int
 
 class Faucet():
     def __init__(self,
-        liquid_material_path = "/World/Looks/OmniSurface_ClearWater", inflow_path:str = "/World/faucet/inflow", 
+        material_name = "OmniSurface_ClearWater", inflow_path:str = "/World/faucet/inflow", 
         link_paths:List[str] = ["/World/faucet/link_0"]
          ):
         """! Faucet class
@@ -39,12 +39,7 @@ class Faucet():
          @param particle_params: parameters related to particle systems
          @return an instance of Faucet class
         """
-        # particle Instance path
-        # self.particleInstanceStr_tmp = "/particlesInstance"
-
-        # self.particle_params = particle_params
-        # self.iso_surface_params = iso_surface_params
-        self.liquid_material_path = liquid_material_path
+        self.material_name = material_name
 
         # inflow position
         self.stage = omni.usd.get_context().get_stage()
@@ -224,7 +219,7 @@ class Faucet():
         omni.kit.commands.execute(
             "CreateAndBindMdlMaterialFromLibrary",
             mdl_name="OmniSurfacePresets.mdl",
-            mtl_name="OmniSurface_Honey",
+            mtl_name=self.material_name,
             mtl_created_list=mtl_created,
         )
         mtl_path = mtl_created[0]
