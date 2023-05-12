@@ -105,8 +105,14 @@ action_config = {
             },  
             {
                 'action_type': 'move',
-                'duration': 100,
+                'duration': 50,
                 'position': [0, -0.4, 0.0],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },  
+            {
+                'action_type': 'move',
+                'duration': 100,
+                'position': [0, -0.4, -0.2],
                 'orientation': [-0.5, 0.5, 0.5, 0.5],
             },  
         ]
@@ -118,8 +124,37 @@ action_config = {
             {
                 'action_type': 'move',
                 'duration': 200,
-                'position': [0, -0.3, 0.05],
+                'position': [0, -0.4, 0.2],
+                'orientation': [-0.5, 0.5, -0.5, -0.5],
+            },   
+            {
+                'action_type': 'move',
+                'duration': 200,
+                'position': [0, -0.4, 0.2],
                 'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },   
+            {
+                'action_type': 'move',
+                'duration': 100,
+                'position': [0, -0.2, 0.08],
+                'orientation': [-0.5, 0.5, 0.5, 0.5],
+            },   
+            {
+                'action_type': 'open',
+                'duration': 60,
+                'ratio': None,
+            },   
+            
+        ]
+    },
+
+    "low_level_test": {
+        'base_prim': None,
+        'steps':[
+            {
+                'action_type': 'low_level',
+                'duration': 200,
+                'joint_positions': [0] * 6,
             },   
         ]
     },

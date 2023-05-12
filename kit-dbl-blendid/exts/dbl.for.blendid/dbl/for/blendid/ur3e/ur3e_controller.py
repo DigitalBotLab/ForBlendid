@@ -3,6 +3,7 @@ import omni.usd
 from omni.isaac.core.controllers import BaseController
 from omni.isaac.core.utils.stage import get_stage_units
 from omni.isaac.core.prims import XFormPrim
+from omni.isaac.core.utils.types import ArticulationAction
 
 from .ur3e import UR3E
 from .rmpflow_controller import RMPFlowController
@@ -35,6 +36,7 @@ class Ue3R140Controller(BaseController):
         # TODO：find height
         self.ee_pos_target = np.array([0.4, 0.2, 0.3])
         self.ee_ori_target = np.array([0.0, -1, 0, 0])
+        self.joint_target = np.zeros(self.robot.num_dof)
 
         # connection
         self.connect_server = connect_server
@@ -56,6 +58,13 @@ class Ue3R140Controller(BaseController):
         """
         self.ee_pos_target = pos
         self.ee_ori_target = ori
+    
+    def update_joint_target(self, joint_positions):
+        """
+        Update Joint Target positions
+        """
+        self.joint_target = joint_positions
+
 
     def update_event(self, event: str):
         """
@@ -87,10 +96,10 @@ class Ue3R140Controller(BaseController):
 
             if step_type == "move":
                 offset_mat = get_transform_mat_from_pos_rot(action_step['position'], action_step['orientation'])
-                print("offset_mat", offset_mat)
+                # print("offset_mat", offset_mat)
 
                 target_mat = offset_mat * base_mat 
-                print("target_mat", target_mat.ExtractTranslation(), target_mat.ExtractRotationQuat())
+                # print("target_mat", target_mat.ExtractTranslation(), target_mat.ExtractRotationQuat())
 
                 target_pos = target_mat.ExtractTranslation()
                 target_rot = target_mat.ExtractRotationQuat()
@@ -124,17 +133,26 @@ class Ue3R140Controller(BaseController):
                     rot_array = np.array([target_rot.GetReal(), target_rot.GetImaginary()[0], target_rot.GetImaginary()[1], target_rot.GetImaginary()[2]])
 
                     self.add_event_to_pool(sub_action['action_type'], sub_action['duration'], pos_array, rot_array)
-
+            
+            elif step_type == "low_level":
+                """
+                Perform low-level action
+                """
+                joint_positions = action_step['joint_positions']
+                self.add_event_to_pool(step_type, duration, joint_positions, None)
 
     def forward(self):
         """
         Main function to update the robot
         """
+        self.total_event_count += 1 # update event time
+        self.event_elapsed -= 1 # update event elapsed time
+
         # update event
         if len(self.event_pool) > 0:
             if self.event_elapsed <= 0:
                 event, elapsed, ee_pos, ee_ori, gripper_ratio = self.event_pool.pop(0)
-                print("event, elapsed, ee_pos, ee_ori ", event, elapsed, ee_pos, ee_ori, gripper_ratio)
+                # print("event, elapsed, ee_pos, ee_ori ", event, elapsed, ee_pos, ee_ori, gripper_ratio)
                 self.update_event(event)
                 if self.event == "move":
                     self.update_ee_target(ee_pos, ee_ori)
@@ -142,6 +160,8 @@ class Ue3R140Controller(BaseController):
                     self.gripper.set_close_ratio(gripper_ratio)
                 elif self.event == "open":
                     self.gripper.set_close_ratio(1.0)
+                elif self.event == "low_level":
+                    self.update_joint_target(ee_pos)
                 
 
                 if self.connect_server:
@@ -162,9 +182,18 @@ class Ue3R140Controller(BaseController):
             actions = self.gripper.forward(action="close")
         elif self.event == "open":
             actions = self.gripper.forward(action="open")
+        elif self.event == "low_level":
+            joint_positions = self.robot.get_joint_positions()
+            a = self.event_elapsed / 200
+            # print("joint_positions", len(joint_positions), "joint_target", len(self.joint_target))
+            joint_positions[:6] =  self.joint_target
+            # self.robot._articulation_view._physics_view.set_dof_position_targets(joint_positions, np.arange(6))
+            # set_joint_positions(joint_positions)
+            # return
+            # actions = self.cs_controller.forward()
 
         self.robot.apply_action(actions)
-
+        # print("actions", actions, self.event, self.event_elapsed)
         # from omni.isaac.core.utils.types import ArticulationAction
         # joint_actions = ArticulationAction()
     
@@ -177,8 +206,7 @@ class Ue3R140Controller(BaseController):
         
         # self.robot.apply_action(joint_actions)
         
-        self.total_event_count += 1 # update event time
-        self.event_elapsed -= 1 # update event elapsed time
+
         # synchronize
         # if self.connect_server:
         #     if self.total_event_count % 60 == 0:

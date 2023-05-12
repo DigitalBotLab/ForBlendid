@@ -220,4 +220,5 @@ class DblForBlendidExtension(omni.ext.IExt):
             #  pick_up_blender
             # self.controller.apply_high_level_action("pick_up_blender") 
             # self.controller.apply_high_level_action("place_blender_to_blending_point")        
+            self.controller.apply_high_level_action("pick_up_cup")            
             self.controller.apply_high_level_action("place_cup")
