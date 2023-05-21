@@ -169,17 +169,24 @@ class DblForBlendidExtension(omni.ext.IExt):
     ########################### robot #######################################################
     def set_robot(self):
         print("set_robot")
+        from .ur3e.controller import MyController
+        from .ur3e.robot import MyRobot
+        from .ur3e.robot_config import ROBOT_CONFIG
 
         # set robot
         prim_path = self.robot_path_widget.model.as_string
-        self.robot = UR3E(prim_path = prim_path)
+        self.robot = MyRobot(prim_path = prim_path, 
+                             end_effector_path=prim_path + "/robotiq_arg2f_base_link",
+                             gripper_dof_names=ROBOT_CONFIG["gripper_dof_names"],
+                             gripper_open_position=ROBOT_CONFIG["gripper_open_position"],
+                             gripper_closed_position=ROBOT_CONFIG["gripper_closed_position"],)
         self.robot.initialize()
         print("robot_info", self.robot.num_dof)
         print("robot_dof_names", len(self.robot.dof_names), self.robot.dof_names)
         # print("robot_gripper", self.robot.gripper._gripper_joint_num)
 
         # set controller
-        self.controller = Ue3R140Controller("ue3r140_controller", self.robot, connect_server=False)
+        self.controller = MyController("ue3r140_controller", self.robot, connect_server=False)
 
     def update_ee_target(self):
         print("update_ee_target")
