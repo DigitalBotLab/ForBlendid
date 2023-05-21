@@ -35,6 +35,17 @@ class DblForBlendidExtension(omni.ext.IExt):
                 ui.Button("Debug", height = 20, clicked_fn=self.debug)
 
                 ui.Line(height = 6)
+                with ui.HStack(height = 20):
+                    ui.Label("Fruit:", width = 50)
+                    self.fruit_name_widget = ui.StringField(width = 100)
+                    self.fruit_name_widget.model.set_value("strawberry")
+                    ui.Label("Size:", width = 50)
+                    self.fruit_size_widget = ui.FloatField(width = 50)
+                    self.fruit_size_widget.model.set_value(1e-4)
+                    ui.Label("Num:", width = 50)
+                    self.fruit_num_widget = ui.IntField(width = 50)
+                    self.fruit_num_widget.model.set_value(20)
+
                 ui.Button("Add Fruit", height = 20, clicked_fn=self.fruit_add)
                 ui.Button("Delete Fruit", height = 20, clicked_fn=self.fruit_delete)
                 ui.Line(height = 6)
@@ -218,7 +229,7 @@ class DblForBlendidExtension(omni.ext.IExt):
         # faucet.set_up_fluid_particle_system()
         # faucet.set_up_cylinder_particles(cylinder_height=1.5, cylinder_radius=0.02)
 
-        faucet = Faucet(material_name = "OmniSurface_Honey", inflow_path = "/World/blender/juice_point")
+        faucet = Faucet(material_name = "OmniSurface_ClearWater", inflow_path = "/World/blender/juice_point")
         faucet.set_up_fluid_particle_system(instance_index=1)
         faucet.set_up_cylinder_particles(cylinder_height=0.4, cylinder_radius=0.04)
 
@@ -227,9 +238,12 @@ class DblForBlendidExtension(omni.ext.IExt):
 
         print("fruit_test")
         from .rigid.baseket import Basket
-        self.basket1 = Basket(item_file_name="strawberry", point_path="/World/WorkingArea/FruitArea/FruitPoint0")
+        fruit_name = self.fruit_name_widget.model.get_value_as_string()
+        fruit_size = self.fruit_size_widget.model.get_value_as_float()
+        fruit_num = self.fruit_num_widget.model.get_value_as_int()
+        self.basket1 = Basket(item_file_name=fruit_name, point_path="/World/WorkingArea/FruitArea/FruitPoint0", item_size=fruit_size)
         print("baseket", self.basket1.point_path)
-        self.basket1.generate_item(item_num=20, item_scale=1e-4)
+        self.basket1.generate_item(item_num=fruit_num)
 
     def fruit_delete(self):
         print("fruit_delete")
