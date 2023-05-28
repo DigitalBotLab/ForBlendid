@@ -15,6 +15,8 @@ EXTENSION_FOLDER_PATH = str(Path(
 
 ASSET_FOLDER_PATH = os.path.join(EXTENSION_FOLDER_PATH,"../../../Models/Fruit")
 
+from .fruit_config import FRUIT_CONFIG
+
 class Basket():
     def __init__(self, item_file_name= "strawberry", 
                  item_scope = "/World/Fruit", 
@@ -30,7 +32,7 @@ class Basket():
         self.item_file_name = item_file_name
         self.point_path = point_path
         self.item_scope = item_scope
-        self.item_size = item_size
+        self.item_size = item_size if item_size else FRUIT_CONFIG[item_file_name]["item_size"]
         self.item_index = item_index
 
         # define item scope

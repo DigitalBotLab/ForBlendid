@@ -10,10 +10,8 @@ import asyncio
 from .ui.style import julia_modeler_style
 from .ui.custom_multifield_widget import CustomMultifieldWidget
 from .ui.custom_bool_widget import CustomBoolWidget
+from .rigid.fruit_config import FRUIT_LIST
 
-# Robot
-from .ur3e.ur3e import UR3E
-from .ur3e.ur3e_controller import Ue3R140Controller
 
 # Any class derived from `omni.ext.IExt` in top level module (defined in `python.modules` of `extension.toml`) will be
 # instantiated when extension gets enabled and `on_startup(ext_id)` will be called. Later when extension gets disabled
@@ -37,8 +35,17 @@ class DblForBlendidExtension(omni.ext.IExt):
                 ui.Line(height = 6)
                 with ui.HStack(height = 20):
                     ui.Label("Fruit:", width = 50)
-                    self.fruit_name_widget = ui.StringField(width = 100)
-                    self.fruit_name_widget.model.set_value("strawberry")
+                    # self.fruit_name_widget = ui.StringField(width = 100)
+                    # self.fruit_name_widget.model.set_value("strawberry")
+
+                    self.fruit_name_widget = ui.ComboBox(
+                        0, *FRUIT_LIST,
+                        name="dropdown_menu",
+                        # Abnormal height because this "transparent" combobox
+                        # has to fit inside the Rectangle behind it
+                        height=10
+                    )
+
                     ui.Label("Size:", width = 50)
                     self.fruit_size_widget = ui.FloatField(width = 50)
                     self.fruit_size_widget.model.set_value(1e-4)
@@ -245,10 +252,13 @@ class DblForBlendidExtension(omni.ext.IExt):
 
         print("fruit_test")
         from .rigid.baseket import Basket
-        fruit_name = self.fruit_name_widget.model.get_value_as_string()
+        fruit_index = self.fruit_name_widget.model.get_item_value_model().get_value_as_int()
+        fruit_name = FRUIT_LIST[fruit_index]
         fruit_size = self.fruit_size_widget.model.get_value_as_float()
         fruit_num = self.fruit_num_widget.model.get_value_as_int()
-        self.basket1 = Basket(item_file_name=fruit_name, point_path="/World/WorkingArea/FruitArea/FruitPoint0", item_size=fruit_size)
+        self.basket1 = Basket(item_file_name=fruit_name, 
+                              point_path="/World/WorkingArea/FruitArea/FruitPoint0", 
+                              item_size=None)
         print("baseket", self.basket1.point_path)
         self.basket1.generate_item(item_num=fruit_num)
 
