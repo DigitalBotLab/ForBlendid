@@ -59,7 +59,7 @@ action_config = {
             {
                 'action_type': 'move',
                 'duration': 200,
-                'position': [0, -0.2, 0.1],
+                'position': [0, -0.1, 0.1],
                 'orientation': [-0.5, 0.5, 0.5, 0.5],
             },   
             {
