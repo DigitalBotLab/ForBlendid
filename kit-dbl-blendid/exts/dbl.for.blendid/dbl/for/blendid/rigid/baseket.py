@@ -2,6 +2,7 @@
 import os
 import json
 import numpy as np
+import random
 from pathlib import Path
 import omni.kit.app
 
@@ -64,7 +65,8 @@ class Basket():
 
             x, y = random_jitter_scale* np.random.randn(2)
             item_translate = self.point_position + Gf.Vec3d(x, y, item_z_offset + random_jitter_scale * i)
-            item_rotation = Gf.Quatd(1, 0, 0, 0)
+            item_rotation = gen_random_rotation() #Gf.Quatd(1, 0, 0, 0)
+            print("item_rotation: ", item_rotation)
 
             item_xform = Gf.Matrix4d().SetScale(Gf.Vec3d(self.item_size)) *  \
                 Gf.Matrix4d().SetRotate(item_rotation) * Gf.Matrix4d().SetTranslate(item_translate)
@@ -83,3 +85,13 @@ class Basket():
         Delete items from the basket
         """
         omni.kit.commands.execute("DeletePrims", paths=[self.item_xform_path])
+
+
+def gen_random_rotation():
+    """
+    Generate random rotation
+    """
+    # Generate random quaternion rotation
+    random_rotation = Gf.Rotation().SetAxisAngle(Gf.Vec3d(0, 0, 1), random.randint(0, 360))
+    
+    return random_rotation.GetQuat()

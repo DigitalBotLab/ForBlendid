@@ -98,7 +98,7 @@ action_config = {
             {
                 'action_type': 'close',
                 'duration': 60,
-                'ratio': 0.7,
+                'ratio': 0.8,
             },
             {
                 'action_type': 'move',

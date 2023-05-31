@@ -91,7 +91,7 @@ class MyController(BaseController):
             base_world_pos, base_world_rot = base_prim.get_world_pose()
         
         base_mat = get_transform_mat_from_pos_rot(base_world_pos, base_world_rot)
-        print("base_mat", base_mat)
+        # print("base_mat", base_mat)
         
         for action_step in high_level_action['steps']:
 
@@ -159,7 +159,7 @@ class MyController(BaseController):
         if len(self.event_pool) > 0:
             if self.event_elapsed <= 0:
                 event, elapsed, ee_pos, ee_ori, gripper_ratio = self.event_pool.pop(0)
-                # print("event, elapsed, ee_pos, ee_ori ", event, elapsed, ee_pos, ee_ori, gripper_ratio)
+                print("event, elapsed, ee_pos, ee_ori ", event, elapsed, ee_pos, ee_ori, gripper_ratio)
                 self.update_event(event)
                 self.event_elapsed = elapsed
                 if self.event == "move":

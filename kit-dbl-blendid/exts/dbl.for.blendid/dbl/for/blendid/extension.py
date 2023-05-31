@@ -51,7 +51,7 @@ class DblForBlendidExtension(omni.ext.IExt):
                     self.fruit_size_widget.model.set_value(1e-4)
                     ui.Label("Num:", width = 50)
                     self.fruit_num_widget = ui.IntField(width = 50)
-                    self.fruit_num_widget.model.set_value(20)
+                    self.fruit_num_widget.model.set_value(10)
 
                 ui.Button("Add Fruit", height = 20, clicked_fn=self.fruit_add)
                 ui.Button("Delete Fruit", height = 20, clicked_fn=self.fruit_delete)
@@ -118,6 +118,9 @@ class DblForBlendidExtension(omni.ext.IExt):
         # stream
         self._is_stopped = True
         self._tensor_started = False   
+
+        # fluid
+        self.fluid_instance_idx = 0
 
     def on_shutdown(self):
         print("[dbl.for.blendid] dbl for blendid shutdown")
@@ -242,10 +245,11 @@ class DblForBlendidExtension(omni.ext.IExt):
         # faucet = Faucet(inflow_path = inflow_path)
         # faucet.set_up_fluid_particle_system()
         # faucet.set_up_cylinder_particles(cylinder_height=1.5, cylinder_radius=0.02)
-
+        
         faucet = Faucet(material_name = "OmniSurface_ClearWater", inflow_path = "/World/blender/juice_point")
-        faucet.set_up_fluid_particle_system(instance_index=1)
-        faucet.set_up_cylinder_particles(cylinder_height=0.4, cylinder_radius=0.04)
+        faucet.set_up_fluid_particle_system(instance_index=self.fluid_instance_idx)
+        faucet.set_up_cylinder_particles(cylinder_height=2.0, cylinder_radius=0.02)
+        self.fluid_instance_idx += 1
 
 
     def fruit_add(self):
@@ -260,7 +264,7 @@ class DblForBlendidExtension(omni.ext.IExt):
                               point_path="/World/WorkingArea/FruitArea/FruitPoint0", 
                               item_size=None)
         print("baseket", self.basket1.point_path)
-        self.basket1.generate_item(item_num=fruit_num)
+        self.basket1.generate_item(item_num=fruit_num) 
 
     def fruit_delete(self):
         print("fruit_delete")
@@ -272,11 +276,12 @@ class DblForBlendidExtension(omni.ext.IExt):
             #  pick_up_blender
             from .ur3e.action_config import action_config
 
-            self.controller.apply_high_level_action(action_config["pick_up_blender"]) 
+            # self.controller.apply_high_level_action(action_config["pick_up_blender"]) 
 
-            place_action = action_config["place_blender_to_point"]
-            place_action["base_prim"] = "/World/WorkingArea/FruitArea/FruitPoint0"
-            self.controller.apply_high_level_action(place_action)
+            # place_action = action_config["place_blender_to_point"]
+            # place_action["base_prim"] = "/World/WorkingArea/FruitArea/FruitPoint0"
+            # place_action["base_prim"] = "/World/WorkingArea/LiquidArea/LiquidPoint"
+            # self.controller.apply_high_level_action(place_action)
             # self.controller.apply_high_level_action("place_blender_to_blending_point")        
-            # self.controller.apply_high_level_action("pick_up_cup")            
-            # self.controller.apply_high_level_action("place_cup")
+            self.controller.apply_high_level_action(action_config["pick_up_cup"])            
+            self.controller.apply_high_level_action(action_config["place_cup"])
