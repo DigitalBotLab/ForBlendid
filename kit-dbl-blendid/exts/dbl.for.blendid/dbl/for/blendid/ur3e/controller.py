@@ -14,7 +14,7 @@ from .robot import MyRobot
 from ..ui.controller import UIController
 
 class MyController(BaseController):
-    def __init__(self, name: str, robot: MyRobot, connect_server = False) -> None: 
+    def __init__(self, name: str, robot: MyRobot, connect_server = False, allow_ui_control = True) -> None: 
         BaseController.__init__(self, name=name)
 
         # env
@@ -38,7 +38,10 @@ class MyController(BaseController):
         self.joint_target = np.zeros(self.robot.num_dof)
 
         # ui controller
-        self.ui_controller = UIController()
+        self.allow_ui_control = allow_ui_control
+        if allow_ui_control:
+            self.ui_controller = UIController()
+            self.last_gripper_action = 0
 
         # connection
         self.connect_server = connect_server
@@ -184,6 +187,37 @@ class MyController(BaseController):
             if self.connect_server:
                 if self.total_event_count > 200 and self.total_event_count % (60 * 3) == 0:
                     self.synchronize_robot()
+
+        ## ui control
+        # get movement from keyboard 
+        if self.allow_ui_control:
+            move_vec = self.ui_controller.QueryMove()
+            query_move =  move_vec != [0, 0, 0]
+            
+            # get rotation from keyboard 
+            rotation_vec = self.ui_controller.QueryRotation()
+            query_rotation = False # rotation_vec != [0, 0]
+
+            # get gripper
+            gripper_val = self.ui_controller.QueryGripper()
+            query_gripper =  self.last_gripper_action != gripper_val
+
+            # update record
+            if query_move or query_rotation or query_gripper:
+                self.last_gripper_action = gripper_val
+
+
+            if query_move or query_rotation:
+                self.update_event("move") 
+                self.ee_pos_target += np.array(move_vec) * 0.001
+                # self.ee_ori_target += np.array(rotation_vec) * 0.01
+            
+            if query_gripper:
+                if gripper_val == 1:
+                    self.update_event("close") 
+                else:
+                    self.update_event("open") 
+
 
         # print("coffee control event", self.event, self.event_elapsed)
         if self.event == "move":

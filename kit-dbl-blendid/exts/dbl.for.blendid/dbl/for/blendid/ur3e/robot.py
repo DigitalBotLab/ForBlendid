@@ -38,7 +38,7 @@ class MyRobot(Robot):
         
         # gripper_open_position = np.array([1, -1, -1, -1, 1, 1]) / -10
         # gripper_closed_position = np.array([1, -1, -1, -1, 1, 1]) / 2.0
-        deltas = None #- np.array(gripper_closed_position) / 50.0
+        deltas =  np.array(gripper_closed_position) / 50.0
 
         self._gripper = MyGripper(
                 end_effector_prim_path=self._end_effector_prim_path,

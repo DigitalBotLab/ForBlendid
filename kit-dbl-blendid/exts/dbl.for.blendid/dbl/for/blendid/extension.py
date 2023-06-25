@@ -33,39 +33,40 @@ class DblForBlendidExtension(omni.ext.IExt):
         self._window_robot_control.frame.style = julia_modeler_style
         with self._window_robot_control.frame:
             with ui.VStack():
-                with ui.CollapsableFrame("PLAY"):
+                ui.Button("Register Physics Event", height = 50, clicked_fn=self.register_physics_event, name = "control_button")
+                with ui.CollapsableFrame("PLAY", collapsed=False):
                     with ui.VStack(height=0, spacing=0):
                         ui.Line(style_type_name_override="HeaderLine") 
                         ui.Spacer(height = 12)
                         control_group = CustomControlGroup()
-                
-                with ui.CollapsableFrame("Info"):
-                    with ui.VStack(height=0, spacing=0):
-                        ui.Line(style_type_name_override="HeaderLine") 
-                        ui.Spacer(height = 12)
-                        with ui.HStack(height = 20):
-                            self.joint_read_widget = CustomMultifieldWidget(
-                                label="Joint Angle (read only):",
-                                sublabels=["j1", "j2", "j3", "j4", "j5", "j6"],
-                                default_vals=[0.0] * 7,
-                                read_only= True
-                            )
                         
-                        with ui.HStack(height = 20):
-                            self.ee_pos_read_widget = CustomMultifieldWidget(
-                                label="EE Position(read only):",
-                                sublabels=["x", "y", "z"],
-                                default_vals=[0, 0, 0],
-                                read_only= True
-                            )
+                        with ui.CollapsableFrame("Info", collapsed=True):
+                            with ui.VStack(height=0, spacing=0):
+                                ui.Line(style_type_name_override="HeaderLine") 
+                                ui.Spacer(height = 12)
+                                with ui.HStack(height = 20):
+                                    self.joint_read_widget = CustomMultifieldWidget(
+                                        label="Joint Angle (read only):",
+                                        sublabels=["j1", "j2", "j3", "j4", "j5", "j6"],
+                                        default_vals=[0.0] * 7,
+                                        read_only= True
+                                    )
+                                
+                                with ui.HStack(height = 20):
+                                    self.ee_pos_read_widget = CustomMultifieldWidget(
+                                        label="EE Position(read only):",
+                                        sublabels=["x", "y", "z"],
+                                        default_vals=[0, 0, 0],
+                                        read_only= True
+                                    )
 
-                        with ui.HStack(height = 20):
-                            self.ee_ori_quat_read_widget = CustomMultifieldWidget(
-                                label="EE Quaternion(read only):",
-                                sublabels=[ "w", "x", "y", "z"],
-                                default_vals=[1, 0, 0, 0],
-                                read_only= True
-                            )
+                                with ui.HStack(height = 20):
+                                    self.ee_ori_quat_read_widget = CustomMultifieldWidget(
+                                        label="EE Quaternion(read only):",
+                                        sublabels=[ "w", "x", "y", "z"],
+                                        default_vals=[1, 0, 0, 0],
+                                        read_only= True
+                                    )
             
             
 
