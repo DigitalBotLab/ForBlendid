@@ -10,6 +10,7 @@ import asyncio
 from .ui.style import julia_modeler_style
 from .ui.custom_multifield_widget import CustomMultifieldWidget
 from .ui.custom_bool_widget import CustomBoolWidget
+from .ui.indoorkit_ui_widget import CustomControlGroup
 from .rigid.fruit_config import FRUIT_LIST
 
 
@@ -27,10 +28,53 @@ class DblForBlendidExtension(omni.ext.IExt):
         carb.settings.get_settings().set_float("/app/runLoops/present/rateLimitFrequency", 25) 
         carb.settings.get_settings().set_bool("/rtx/ecoMode/enabled", True)
     
-        self._window = ui.Window("For blendid", width=300, height=300)
+
+        self._window_robot_control = ui.Window("robot control", width=300)
+        self._window_robot_control.frame.style = julia_modeler_style
+        with self._window_robot_control.frame:
+            with ui.VStack():
+                with ui.CollapsableFrame("PLAY"):
+                    with ui.VStack(height=0, spacing=0):
+                        ui.Line(style_type_name_override="HeaderLine") 
+                        ui.Spacer(height = 12)
+                        control_group = CustomControlGroup()
+                
+                with ui.CollapsableFrame("Info"):
+                    with ui.VStack(height=0, spacing=0):
+                        ui.Line(style_type_name_override="HeaderLine") 
+                        ui.Spacer(height = 12)
+                        with ui.HStack(height = 20):
+                            self.joint_read_widget = CustomMultifieldWidget(
+                                label="Joint Angle (read only):",
+                                sublabels=["j1", "j2", "j3", "j4", "j5", "j6"],
+                                default_vals=[0.0] * 7,
+                                read_only= True
+                            )
+                        
+                        with ui.HStack(height = 20):
+                            self.ee_pos_read_widget = CustomMultifieldWidget(
+                                label="EE Position(read only):",
+                                sublabels=["x", "y", "z"],
+                                default_vals=[0, 0, 0],
+                                read_only= True
+                            )
+
+                        with ui.HStack(height = 20):
+                            self.ee_ori_quat_read_widget = CustomMultifieldWidget(
+                                label="EE Quaternion(read only):",
+                                sublabels=[ "w", "x", "y", "z"],
+                                default_vals=[1, 0, 0, 0],
+                                read_only= True
+                            )
+            
+            
+
+        self._window = ui.Window("For blendid", width=300)
         with self._window.frame:
             with ui.VStack():
                 ui.Button("Debug", height = 20, clicked_fn=self.debug)
+                ui.Button("Debug2", height = 20, clicked_fn=self.debug2)
+                
 
                 ui.Line(height = 6)
                 with ui.HStack(height = 20):
@@ -84,31 +128,7 @@ class DblForBlendidExtension(omni.ext.IExt):
                 ui.Button("Update EE Target", height = 20, clicked_fn=self.update_ee_target)
                 ui.Button("Open/Close Gripper", height = 20, clicked_fn=self.toggle_gripper)
 
-                ui.Spacer(height = 9)
-                ui.Line(height = 2)
-                with ui.HStack(height = 20):
-                    self.joint_read_widget = CustomMultifieldWidget(
-                        label="Joint Angle (read only):",
-                        sublabels=["j1", "j2", "j3", "j4", "j5", "j6"],
-                        default_vals=[0.0] * 7,
-                        read_only= True
-                    )
-                    
-                with ui.HStack(height = 20):
-                    self.ee_pos_read_widget = CustomMultifieldWidget(
-                        label="EE Position(read only):",
-                        sublabels=["x", "y", "z"],
-                        default_vals=[0, 0, 0],
-                        read_only= True
-                    )
-
-                with ui.HStack(height = 20):
-                    self.ee_ori_quat_read_widget = CustomMultifieldWidget(
-                        label="EE Quaternion(read only):",
-                        sublabels=[ "w", "x", "y", "z"],
-                        default_vals=[1, 0, 0, 0],
-                        read_only= True
-                    )
+               
 
         # robot
         self.robot = None
@@ -117,7 +137,7 @@ class DblForBlendidExtension(omni.ext.IExt):
 
         # stream
         self._is_stopped = True
-        self._tensor_started = False   
+        self._tensor_started = False     
 
         # fluid
         self.fluid_instance_idx = 0
@@ -292,3 +312,30 @@ class DblForBlendidExtension(omni.ext.IExt):
             pour_action = action_config["pour"] 
             pour_action["base_prim"] = "/World/Cup/Xform"
             self.controller.apply_high_level_action(pour_action)  
+    
+    def debug2(self):
+        print("debug2")
+        from omni.isaac.orbit.robots.config.franka import FRANKA_PANDA_ARM_WITH_PANDA_HAND_CFG
+        from omni.isaac.orbit.robots.config.universal_robots import UR10_CFG
+        from omni.isaac.orbit.robots.single_arm import SingleArmManipulator
+
+        robot_cfg = UR10_CFG
+        print("robot_cfg", robot_cfg.meta_info)
+        # robot = SingleArmManipulator(cfg=robot_cfg)
+        # robot.spawn("/World/Robot_1", translation=(0.0, -1.0, 0.0))
+        # robot.spawn("/World/Robot_2", translation=(0.0, 1.0, 0.0))
+        
+        # # print("UR10_CFG", UR10_CFG)
+        # try:
+        #     from omni.isaac.orbit.devices import Se3Keyboard
+        # except:
+        #     self._ext_manager = omni.kit.app.get_app().get_extension_manager()
+        #     self._ext_manager.set_extension_enabled_immediate("omni.isaac.orbit", True)
+        #     from omni.isaac.orbit.devices import Se3Keyboard
+
+        
+        # teleop_interface = Se3Keyboard(pos_sensitivity=0.1, rot_sensitivity=0.1)
+
+        # # Reset interface internals
+        # teleop_interface.reset()
+        # print(teleop_interface)

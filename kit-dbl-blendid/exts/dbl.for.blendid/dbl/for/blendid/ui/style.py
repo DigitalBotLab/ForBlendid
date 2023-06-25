@@ -196,5 +196,50 @@ julia_modeler_style = {
         "font_size": fl_field_text_font_size,
         "secondary_color": cl_transparent,  # button background color
     },
-    "Rectangle::combobox_icon_cover": {"background_color": cl_field_bg}
+    "Rectangle::combobox_icon_cover": {"background_color": cl_field_bg},
+
+     "Button::control_button": {
+        "background_color": cl.field_bg,
+        "border_color": cl.btn_border,
+        "border_width": fl.border_width,
+        "border_radius": 4,
+        "margin": 2,
+        "corner_flag": ui.CornerFlag.ALL,
+    },
+
+    "Button::control_button_disabled": {
+        "background_color": cl(0.1, 0.7, 0.3, 0.4),
+        "border_color": cl.btn_border,
+        "border_width": fl.border_width,
+        "border_radius": 4,
+        "margin": 2,
+        "corner_flag": ui.CornerFlag.ALL,
+    },
+
+    "Button::control_button_pressed1": {
+        "background_color": cl( 0.7, 0.1, 0.3, 0.3),
+        "border_color": cl.btn_border,
+        "border_width": fl.border_width,
+        "border_radius": 4,
+        "margin": 2,
+        "corner_flag": ui.CornerFlag.ALL,
+    },
+
+    "Button::control_button_pressed2": {
+        "background_color": cl(0.1, 0.3, 0.7, 0.3),
+        "border_color": cl.btn_border,
+        "border_width": fl.border_width,
+        "border_radius": 4,
+        "margin": 2,
+        "corner_flag": ui.CornerFlag.ALL,
+    },
+
+    "Button::control_button_pressed3": {
+        "background_color": cl(0.7, 0.3, 0.7, 0.3),
+        "border_color": cl.btn_border,
+        "border_width": fl.border_width,
+        "border_radius": 4,
+        "margin": 2,
+        "corner_flag": ui.CornerFlag.ALL,
+    },
 }

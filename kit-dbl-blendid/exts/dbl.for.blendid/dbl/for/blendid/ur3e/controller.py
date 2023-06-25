@@ -11,6 +11,7 @@ import os
 import numpy as np
 from .numpy_utils import *
 from .robot import MyRobot
+from ..ui.controller import UIController
 
 class MyController(BaseController):
     def __init__(self, name: str, robot: MyRobot, connect_server = False) -> None: 
@@ -36,11 +37,15 @@ class MyController(BaseController):
         self.ee_ori_target = np.array([0.0, -1, 0, 0])
         self.joint_target = np.zeros(self.robot.num_dof)
 
+        # ui controller
+        self.ui_controller = UIController()
+
         # connection
         self.connect_server = connect_server
         # if connect_server:
         #     self.client = KinovaClient()
         #     self.sending_message = False
+
        
         # add go home default action
         # self.apply_high_level_action()
