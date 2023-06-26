@@ -29,19 +29,37 @@ class DblForBlendidExtension(omni.ext.IExt):
         carb.settings.get_settings().set_bool("/rtx/ecoMode/enabled", True)
     
 
-        self._window_robot_control = ui.Window("robot control", width=300)
+        self._window_robot_control = ui.Window("Robot control", width=300)
         self._window_robot_control.frame.style = julia_modeler_style
         with self._window_robot_control.frame:
             with ui.VStack():
-                ui.Button("Register Physics Event", height = 50, clicked_fn=self.register_physics_event, name = "control_button")
                 with ui.CollapsableFrame("PLAY", collapsed=False):
                     with ui.VStack(height=0, spacing=0):
                         ui.Line(style_type_name_override="HeaderLine") 
                         ui.Spacer(height = 12)
                         control_group = CustomControlGroup()
                         
-                        with ui.CollapsableFrame("Info", collapsed=True):
-                            with ui.VStack(height=0, spacing=0):
+                        with ui.CollapsableFrame("EE control", collapsed=True):
+                            with ui.VStack():
+                                self.ee_pos_widget = CustomMultifieldWidget(
+                                        label="Transform",
+                                        default_vals=[0.4, 0.2, 0.3],
+                                        height = 20,
+                                    )
+                                ui.Spacer(height = 9)
+                                with ui.HStack(height = 20):
+                                    self.ee_ori_widget = CustomMultifieldWidget(
+                                        label="Orient (Euler)",
+                                        default_vals=[0, 0.0, 0],
+                                        height = 20,
+                                    )
+                                ui.Spacer(height = 9)
+                                ui.Button("Update EE Target", height = 20, clicked_fn=self.update_ee_target)
+                                ui.Button("Open/Close Gripper", height = 20, clicked_fn=self.toggle_gripper)
+
+
+                        with ui.CollapsableFrame("Info", collapsed=False):
+                            with ui.VStack():
                                 ui.Line(style_type_name_override="HeaderLine") 
                                 ui.Spacer(height = 12)
                                 with ui.HStack(height = 20):
@@ -67,14 +85,20 @@ class DblForBlendidExtension(omni.ext.IExt):
                                         default_vals=[1, 0, 0, 0],
                                         read_only= True
                                     )
+                ui.Button("Render", height = 50, clicked_fn=self.render_image)
             
             
 
         self._window = ui.Window("For blendid", width=300)
         with self._window.frame:
             with ui.VStack():
-                ui.Button("Debug", height = 20, clicked_fn=self.debug)
-                ui.Button("Debug2", height = 20, clicked_fn=self.debug2)
+                with ui.HStack(height = 40):
+                    # ui.Button("Motion 1", clicked_fn=self.motion_one)
+                    ui.Button("Motion 2", clicked_fn=self.motion_two)
+                    ui.Button("Motion 3", clicked_fn=self.motion_three)
+                    ui.Button("Motion 4", clicked_fn=self.motion_four)
+                
+                
                 
 
                 ui.Line(height = 6)
@@ -98,10 +122,11 @@ class DblForBlendidExtension(omni.ext.IExt):
                     self.fruit_num_widget = ui.IntField(width = 50)
                     self.fruit_num_widget.model.set_value(10)
 
-                ui.Button("Add Fruit", height = 20, clicked_fn=self.fruit_add)
-                ui.Button("Delete Fruit", height = 20, clicked_fn=self.fruit_delete)
+                with ui.HStack(height = 40): 
+                    ui.Button("Add Fruit", clicked_fn=self.fruit_add)
+                    ui.Button("Delete Fruit", clicked_fn=self.fruit_delete)
                 ui.Line(height = 6)
-                ui.Button("Add Fluid", height = 20, clicked_fn=self.fluid_test)
+                ui.Button("Add Fluid", height = 40, clicked_fn=self.fluid_test)
 
                 ui.Line(height = 2)
                 ui.Button("Register Physics Event", height = 50, clicked_fn=self.register_physics_event)
@@ -109,25 +134,7 @@ class DblForBlendidExtension(omni.ext.IExt):
                     ui.Label("Robot Prim Path:", width = 200)
                     self.robot_path_widget = ui.StringField(width = 300)
                     self.robot_path_widget.model.set_value("/World/ur3e")
-                
-                ui.Spacer(height = 9)
-                ui.Label("End Effector", height = 20)
-                with ui.HStack(height = 20):
-                    self.ee_pos_widget = CustomMultifieldWidget(
-                        label="Transform",
-                        default_vals=[0.4, 0.2, 0.3],
-                        height = 20,
-                    )
-                ui.Spacer(height = 9)
-                with ui.HStack(height = 20):
-                    self.ee_ori_widget = CustomMultifieldWidget(
-                        label="Orient (Euler)",
-                        default_vals=[0, 0.0, 0],
-                        height = 20,
-                    )
-                ui.Spacer(height = 9)
-                ui.Button("Update EE Target", height = 20, clicked_fn=self.update_ee_target)
-                ui.Button("Open/Close Gripper", height = 20, clicked_fn=self.toggle_gripper)
+              
 
                
 
@@ -290,6 +297,38 @@ class DblForBlendidExtension(omni.ext.IExt):
     def fruit_delete(self):
         print("fruit_delete")
         self.basket1.delete_item()
+    
+    ########################### motion #######################################################
+    def motion_one(self):
+        pass
+
+    def motion_two(self):
+        if self.controller:
+            #  pick_up_blender
+            from .ur3e.action_config import action_config
+
+            self.controller.apply_high_level_action(action_config["pick_up_blender"]) 
+    
+    def motion_three(self):
+        if self.controller:
+            #  pick_up_blender
+            from .ur3e.action_config import action_config
+            place_action = action_config["place_blender_to_point"]
+            place_action["base_prim"] = "/World/WorkingArea/FruitArea/FruitPoint0"
+            # place_action["base_prim"] = "/World/WorkingArea/LiquidArea/LiquidPoint"
+            self.controller.apply_high_level_action(place_action)
+            # self.controller.apply_high_level_action("place_blender_to_blending_point")     
+    
+    def motion_four(self):
+        if self.controller:
+            #  pick_up_blender
+            from .ur3e.action_config import action_config
+
+            pour_action = action_config["pour"] 
+            pour_action["base_prim"] = "/World/Cup/Xform"
+            self.controller.apply_high_level_action(pour_action)  
+    
+    ################################ debug ####################################################
 
     def debug(self):
         print("debug")
@@ -310,12 +349,12 @@ class DblForBlendidExtension(omni.ext.IExt):
             # self.controller.apply_high_level_action(action_config["pick_up_cup"])            
             # self.controller.apply_high_level_action(action_config["place_cup"])
 
-            pour_action = action_config["pour"] 
-            pour_action["base_prim"] = "/World/Cup/Xform"
-            self.controller.apply_high_level_action(pour_action)  
+            # pour_action = action_config["pour"] 
+            # pour_action["base_prim"] = "/World/Cup/Xform"
+            # self.controller.apply_high_level_action(pour_action)  
     
     def debug2(self):
-        # print("debug2")
+        print("debug2")
         # from omni.isaac.orbit.robots.config.franka import FRANKA_PANDA_ARM_WITH_PANDA_HAND_CFG
         # from omni.isaac.orbit.robots.config.universal_robots import UR10_CFG
         # from omni.isaac.orbit.robots.single_arm import SingleArmManipulator
@@ -367,8 +406,11 @@ class DblForBlendidExtension(omni.ext.IExt):
         # # Wait until the viewport has valid resources
         # await viewport_api.wait_for_rendered_frames()
 
+
+    def render_image(self):
         from omni.kit.capture.viewport import CaptureOptions, CaptureExtension
         import os
+        from datetime import datetime
         import pathlib
 
         def make_sure_directory_existed(directory):
@@ -394,8 +436,10 @@ class DblForBlendidExtension(omni.ext.IExt):
         options.file_type = ".png"
         options.output_folder = str(filePath)
         make_sure_directory_existed(options.output_folder)
-        clean_files_in_directory(options.output_folder, ".png")
-        exr_path = os.path.join(options._output_folder, "Capture1.png")
+        # clean_files_in_directory(options.output_folder, ".png")
+        now = datetime.now() # current date and time
+        date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
+        exr_path = os.path.join(options._output_folder, f"{date_time}.png")
         carb.log_warn(f"Capture image path: {exr_path}")
         options.hdr_output = False
         options.camera = "/OmniverseKit_Persp"
