@@ -315,28 +315,93 @@ class DblForBlendidExtension(omni.ext.IExt):
             self.controller.apply_high_level_action(pour_action)  
     
     def debug2(self):
-        print("debug2")
-        from omni.isaac.orbit.robots.config.franka import FRANKA_PANDA_ARM_WITH_PANDA_HAND_CFG
-        from omni.isaac.orbit.robots.config.universal_robots import UR10_CFG
-        from omni.isaac.orbit.robots.single_arm import SingleArmManipulator
+        # print("debug2")
+        # from omni.isaac.orbit.robots.config.franka import FRANKA_PANDA_ARM_WITH_PANDA_HAND_CFG
+        # from omni.isaac.orbit.robots.config.universal_robots import UR10_CFG
+        # from omni.isaac.orbit.robots.single_arm import SingleArmManipulator
 
-        robot_cfg = UR10_CFG
-        print("robot_cfg", robot_cfg.meta_info)
+        # robot_cfg = UR10_CFG
+        # print("robot_cfg", robot_cfg.meta_info)
         # robot = SingleArmManipulator(cfg=robot_cfg)
         # robot.spawn("/World/Robot_1", translation=(0.0, -1.0, 0.0))
         # robot.spawn("/World/Robot_2", translation=(0.0, 1.0, 0.0))
         
         # # print("UR10_CFG", UR10_CFG)
-        # try:
-        #     from omni.isaac.orbit.devices import Se3Keyboard
-        # except:
-        #     self._ext_manager = omni.kit.app.get_app().get_extension_manager()
-        #     self._ext_manager.set_extension_enabled_immediate("omni.isaac.orbit", True)
-        #     from omni.isaac.orbit.devices import Se3Keyboard
 
-        
-        # teleop_interface = Se3Keyboard(pos_sensitivity=0.1, rot_sensitivity=0.1)
+        # self._ext_manager = omni.kit.app.get_app().get_extension_manager()
+        # self._ext_manager.set_extension_enabled_immediate("omni.isaac.orbit", True)
 
-        # # Reset interface internals
-        # teleop_interface.reset()
-        # print(teleop_interface)
+        # from omni.isaac.orbit.sensors.camera import Camera, PinholeCameraCfg
+        # import omni.replicator.core as rep
+
+        # camera_cfg = PinholeCameraCfg(
+        #     sensor_tick=0,
+        #     height=180,
+        #     width=320,
+        #     data_types=["rgb", "distance_to_image_plane", "normals", "distance_to_camera"],
+        #     usd_params=PinholeCameraCfg.UsdCameraCfg(clipping_range=(0.1, 1.0e5)),
+        # )
+        # camera = Camera(cfg=camera_cfg, device="cpu")
+        # # camera.spawn("/OmniverseKit_Persp")
+
+        # # Initialize sensor
+        # camera.initialize("/OmniverseKit_Persp")
+
+        # # Create replicator writer
+        # rep_writer = rep.BasicWriter(output_dir="what", frame_padding=3)
+
+
+        # # update camera
+        # camera.update( 1 / 60.0 )
+        # print("camera.data.output", camera.data.output['rgb'])
+
+        # # Save images
+        # rep_writer.write(camera.data.output)
+
+        # import omni.renderer_capture
+        # capture_next_frame = omni.renderer_capture.acquire_renderer_capture_interface().capture_next_frame_swapchain
+        # wait_async_capture = omni.renderer_capture.acquire_renderer_capture_interface().wait_async_capture
+
+
+        # viewport_api = get_active_viewport(self._usd_context)
+        # # Wait until the viewport has valid resources
+        # await viewport_api.wait_for_rendered_frames()
+
+        from omni.kit.capture.viewport import CaptureOptions, CaptureExtension
+        import os
+        import pathlib
+
+        def make_sure_directory_existed(directory):
+            if not os.path.exists(directory):
+                try:
+                    os.makedirs(directory, exist_ok=True)
+                except OSError as error:
+                    carb.log_warn(f"Directory cannot be created: {dir}")
+                    return False
+            return True
+
+        def clean_files_in_directory(directory, suffix):
+            if not os.path.exists(directory):
+                return
+            images = os.listdir(directory)
+            for item in images:
+                if item.endswith(suffix):
+                    os.remove(os.path.join(directory, item))
+
+        capture_filename = "capture_png_test"
+        filePath = pathlib.Path("I:\\Temp").joinpath(capture_filename)
+        options = CaptureOptions()
+        options.file_type = ".png"
+        options.output_folder = str(filePath)
+        make_sure_directory_existed(options.output_folder)
+        clean_files_in_directory(options.output_folder, ".png")
+        exr_path = os.path.join(options._output_folder, "Capture1.png")
+        carb.log_warn(f"Capture image path: {exr_path}")
+        options.hdr_output = False
+        options.camera = "/OmniverseKit_Persp"
+
+        capture_instance = CaptureExtension().get_instance()
+        capture_instance.options = options
+        capture_instance.start()
+
+        # capture_next_frame("1.png")
