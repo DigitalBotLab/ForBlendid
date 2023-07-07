@@ -14,7 +14,10 @@ from .robot import MyRobot
 from ..ui.controller import UIController
 
 class MyController(BaseController):
-    def __init__(self, name: str, robot: MyRobot, connect_server = False, allow_ui_control = True) -> None: 
+    def __init__(self, name: str, robot: MyRobot, 
+                 config_path: str = "ur3e_rmpflow/config.json",
+                 connect_server = False, 
+                 allow_ui_control = True) -> None: 
         BaseController.__init__(self, name=name)
 
         # env
@@ -29,7 +32,7 @@ class MyController(BaseController):
         self.gripper = self.robot.gripper
         self.cs_controller = RMPFlowController(name="cspace_controller", 
                                                robot_articulation=self.robot,
-                                               rmp_config_path=os.path.join(os.path.dirname(__file__), "ur3e_rmpflow/config.json")
+                                               rmp_config_path=os.path.join(os.path.dirname(__file__), config_path)
                                                )
         
         # TODO：find height

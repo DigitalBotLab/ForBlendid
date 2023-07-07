@@ -133,8 +133,16 @@ class DblForBlendidExtension(omni.ext.IExt):
                 with ui.HStack(height = 20): 
                     ui.Label("Robot Prim Path:", width = 200)
                     self.robot_path_widget = ui.StringField(width = 300)
-                    self.robot_path_widget.model.set_value("/World/ur3e")
-              
+                    self.robot_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova")
+                with ui.HStack(height = 20): 
+                    ui.Label("EE Prim Path:", width = 200)
+                    self.ee_path_widget = ui.StringField(width = 300)
+                    self.ee_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova/robotiq_85_base_link")
+                with ui.HStack(height = 20): 
+                    ui.Label("RMP Config Path:", width = 200)
+                    self.rmp_config_path_widget = ui.StringField(width = 300)
+                    self.rmp_config_path_widget.model.set_value("kinova_rmpflow/config7.json")
+                
 
                
 
@@ -213,8 +221,9 @@ class DblForBlendidExtension(omni.ext.IExt):
 
         # set robot
         prim_path = self.robot_path_widget.model.as_string
+        end_effector_path = self.ee_path_widget.model.as_string
         self.robot = MyRobot(prim_path = prim_path, 
-                             end_effector_path=prim_path + "/robotiq_arg2f_base_link",
+                             end_effector_path=end_effector_path,
                              gripper_dof_names=ROBOT_CONFIG["gripper_dof_names"],
                              gripper_open_position=ROBOT_CONFIG["gripper_open_position"],
                              gripper_closed_position=ROBOT_CONFIG["gripper_closed_position"],)
@@ -224,7 +233,12 @@ class DblForBlendidExtension(omni.ext.IExt):
         # print("robot_gripper", self.robot.gripper._gripper_joint_num)
 
         # set controller
-        self.controller = MyController("ue3r140_controller", self.robot, connect_server=False)
+        rmp_config_path = self.rmp_config_path_widget.model.as_string
+        self.controller = MyController(name=prim_path, 
+                                       robot=self.robot, 
+                                       connect_server=False, 
+                                       config_path=rmp_config_path)
+        
 
     def update_ee_target(self):
         print("update_ee_target")
