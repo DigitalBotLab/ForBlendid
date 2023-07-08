@@ -1,0 +1,58 @@
+{
+    "low_level_test": {
+        "base_prim": null,
+        "steps": [
+            {
+                "action_type": "low_level",
+                "duration": 200,
+                "joint_positions": [
+                    0.2,
+                    0.2,
+                    0.2,
+                    0.2,
+                    0.2,
+                    0.2,
+                    0.2
+                ]
+            }
+        ]
+    },
+    "go_home": {
+        "base_prim": null,
+        "steps": [
+            {
+                "action_type": "move",
+                "duration": 200,
+                "position": [
+                    0.45666,
+                    0.0,
+                    0.43371
+                ],
+                "orientation": [
+                    0.5,
+                    0.5,
+                    0.5,
+                    0.5
+                ]
+            }
+        ]
+    },
+    "go_home_low_level": {
+        "base_prim": null,
+        "steps": [
+            {
+                "action_type": "low_level",
+                "duration": 200,
+                "joint_positions": [
+                    0.07184541970491409,
+                    0.26501205563545227,
+                    -0.1865573525428772,
+                    2.266810894012451,
+                    -0.1264706403017044,
+                    -0.9659130573272705,
+                    -1.4498010873794556
+                ]
+            }
+        ]
+    }
+}

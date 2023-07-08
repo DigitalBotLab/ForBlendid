@@ -4,6 +4,8 @@ import omni.timeline
 import omni.kit.app
 import carb
 import numpy as np
+import json
+import os
 import asyncio
 
 # UI
@@ -85,7 +87,15 @@ class DblForBlendidExtension(omni.ext.IExt):
                                         default_vals=[1, 0, 0, 0],
                                         read_only= True
                                     )
-                ui.Button("Render", height = 50, clicked_fn=self.render_image)
+                ui.Button("Record (low level action)", height = 50, clicked_fn=self.record_control)
+                with ui.HStack(height = 20):
+                    ui.Label("Action Config Path:", width = 200)
+                    self.action_config_path_widget = ui.StringField(width = 300)
+                    self.action_config_path_widget.model.set_value("task/kinova_action.json")   
+                with ui.HStack(height = 20):
+                    ui.Label("Action Name:", width = 200)
+                    self.action_name_widget = ui.StringField(width = 300)
+                    self.action_name_widget.model.set_value("go_home_low_level")         
             
             
 
@@ -357,11 +367,15 @@ class DblForBlendidExtension(omni.ext.IExt):
 
     def debug(self):
         print("debug")
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        print("current dir:", current_directory)
         if self.controller:
-            #  pick_up_blender
-            from .ur3e.action_config import action_config
+            pass
+            #@ from .ur3e.action_config import action_config
 
-            self.controller.apply_high_level_action(action_config["low_level_test"]) 
+            action_config = json.load(open(os.path.join(current_directory, "task/kinova_action.json"), "r"))
+            # self.controller.apply_high_level_action(action_config["low_level_test"]) 
+            self.controller.apply_high_level_action(action_config["go_home_low_level"]) 
             
 
     def debug2(self):
@@ -370,5 +384,25 @@ class DblForBlendidExtension(omni.ext.IExt):
 
 
 
-    def render_image(self):
-       print("render_image")
+    def record_control(self):
+        print("record_control")
+        if self.controller:
+            self.robot = self.controller.robot
+            current_directory = os.path.dirname(os.path.abspath(__file__))
+            action_config_path = self.action_config_path_widget.model.as_string
+            action_config = json.load(open(os.path.join(current_directory, action_config_path), "r"))
+            action_name = self.action_name_widget.model.as_string
+            new_action = {
+                action_name: {
+                    "base_prim": None,
+                    "steps": [
+                        {
+                            "action_type": "low_level",
+                            "duration": 200,
+                            "joint_positions": self.robot.get_joint_positions().tolist()[:(self.robot.num_dof-self.robot.gripper._gripper_joint_num)]
+                        }
+                    ]
+                },
+            }
+            action_config.update(new_action)
+            json.dump(action_config, open(os.path.join(current_directory, action_config_path), "w"), indent=4)
