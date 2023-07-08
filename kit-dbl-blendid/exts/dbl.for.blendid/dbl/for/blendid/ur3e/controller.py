@@ -239,7 +239,7 @@ class MyController(BaseController):
             joint_positions = self.robot.get_joint_positions()
             a = 1 - self.event_elapsed / 200
             print("joint_positions", len(joint_positions), "joint_target", len(self.joint_target))
-            joint_positions[:6] =  self.joint_target # self.get_joint_target(a)
+            joint_positions[:(self.robot.num_dof-self.robot.gripper._gripper_joint_num)] =  self.joint_target # self.get_joint_target(a)
             # self.robot._articulation_view._physics_view.set_dof_position_targets(joint_positions, np.arange(6))
             # self.robot.set_joint_positions(joint_positions, np.arange(len(joint_positions)))
             actions = ArticulationAction(joint_positions = joint_positions) 

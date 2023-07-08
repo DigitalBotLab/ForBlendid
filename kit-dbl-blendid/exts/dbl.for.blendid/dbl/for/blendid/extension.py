@@ -58,7 +58,7 @@ class DblForBlendidExtension(omni.ext.IExt):
                                 ui.Button("Open/Close Gripper", height = 20, clicked_fn=self.toggle_gripper)
 
 
-                        with ui.CollapsableFrame("Info", collapsed=False):
+                        with ui.CollapsableFrame("Info", collapsed=True, height = 0):
                             with ui.VStack():
                                 ui.Line(style_type_name_override="HeaderLine") 
                                 ui.Spacer(height = 12)
@@ -138,18 +138,20 @@ class DblForBlendidExtension(omni.ext.IExt):
                     ui.Label("Robot Prim Path:", width = 200)
                     self.robot_path_widget = ui.StringField(width = 300)
                     self.robot_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova")
-                with ui.HStack(height = 20): 
-                    ui.Label("EE Prim Path:", width = 200)
-                    self.ee_path_widget = ui.StringField(width = 300)
-                    self.ee_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova/robotiq_85_base_link")
-                with ui.HStack(height = 20): 
-                    ui.Label("RMP Config Path:", width = 200)
-                    self.rmp_config_path_widget = ui.StringField(width = 300)
-                    self.rmp_config_path_widget.model.set_value("kinova_rmpflow/config7.json")
-                with ui.HStack(height = 20): 
-                    ui.Label("Gripper type:", width = 200)
-                    self.gripper_type_widget = ui.StringField(width = 300)
-                    self.gripper_type_widget.model.set_value("robotiq85")
+
+                with ui.CollapsableFrame("Robot Config", height = 0, collapsed=True):
+                    with ui.HStack(height = 20): 
+                        ui.Label("EE Prim Path:", width = 200)
+                        self.ee_path_widget = ui.StringField(width = 300)
+                        self.ee_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova/robotiq_85_base_link")
+                    with ui.HStack(height = 20): 
+                        ui.Label("RMP Config Path:", width = 200)
+                        self.rmp_config_path_widget = ui.StringField(width = 300)
+                        self.rmp_config_path_widget.model.set_value("kinova_rmpflow/config7.json")
+                    with ui.HStack(height = 20): 
+                        ui.Label("Gripper type:", width = 200)
+                        self.gripper_type_widget = ui.StringField(width = 300)
+                        self.gripper_type_widget.model.set_value("robotiq85")
                 
 
                
