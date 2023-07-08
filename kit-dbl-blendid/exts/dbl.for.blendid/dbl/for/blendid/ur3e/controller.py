@@ -238,13 +238,13 @@ class MyController(BaseController):
         elif self.event == "low_level":
             joint_positions = self.robot.get_joint_positions()
             a = 1 - self.event_elapsed / 200
-            # print("joint_positions", len(joint_positions), "joint_target", len(self.joint_target))
-            joint_positions[:6] =  self.get_joint_target(a)
+            print("joint_positions", len(joint_positions), "joint_target", len(self.joint_target))
+            joint_positions[:6] =  self.joint_target # self.get_joint_target(a)
             # self.robot._articulation_view._physics_view.set_dof_position_targets(joint_positions, np.arange(6))
-            self.robot.set_joint_positions(joint_positions, np.arange(len(joint_positions)))
-            # actions = ArticulationAction(joint_positions = joint_positions) 
+            # self.robot.set_joint_positions(joint_positions, np.arange(len(joint_positions)))
+            actions = ArticulationAction(joint_positions = joint_positions) 
             # set_joint_positions(joint_positions)
-            return
+            # return
             # actions = self.cs_controller.forward()
 
         self.robot.apply_action(actions)

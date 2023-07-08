@@ -151,17 +151,6 @@ action_config = {
         ]
     },
 
-    "low_level_test": {
-        'base_prim': None,
-        'steps':[
-            {
-                'action_type': 'low_level',
-                'duration': 200,
-                'joint_positions': [0] * 6,
-            },   
-        ]
-    },
-
     "pour": {
         'base_prim': '/World/Cup/cup_01',
         'steps':[
@@ -362,4 +351,15 @@ action_config = {
         ]
     },
     
+    ################### low level test #############################
+    "low_level_test": {
+        "base_prim": None,
+        "steps": [
+            {
+                "action_type": "low_level",
+                "duration": 200,
+                "joint_positions": [0.2] * 7,
+            }
+        ]
+    }
 }

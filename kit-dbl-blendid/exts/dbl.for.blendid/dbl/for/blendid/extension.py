@@ -92,41 +92,45 @@ class DblForBlendidExtension(omni.ext.IExt):
         self._window = ui.Window("For blendid", width=300)
         with self._window.frame:
             with ui.VStack():
+                with ui.CollapsableFrame("Motion Play", height = 0, collapsed=True):
+                    with ui.HStack(height = 40):
+                        # ui.Button("Motion 1", clicked_fn=self.motion_one)
+                        ui.Button("Motion 2", clicked_fn=self.motion_two)
+                        ui.Button("Motion 3", clicked_fn=self.motion_three)
+                        ui.Button("Motion 4", clicked_fn=self.motion_four)
+                
                 with ui.HStack(height = 40):
-                    # ui.Button("Motion 1", clicked_fn=self.motion_one)
-                    ui.Button("Motion 2", clicked_fn=self.motion_two)
-                    ui.Button("Motion 3", clicked_fn=self.motion_three)
-                    ui.Button("Motion 4", clicked_fn=self.motion_four)
+                    ui.Button("Debug", clicked_fn=self.debug)
+                    ui.Button("Debug2", clicked_fn=self.debug2)
                 
                 
-                
+                with ui.CollapsableFrame("Fruit Test", height = 0, collapsed=True):
+                    ui.Line(height = 6)
+                    with ui.HStack(height = 20):
+                        ui.Label("Fruit:", width = 50)
+                        # self.fruit_name_widget = ui.StringField(width = 100)
+                        # self.fruit_name_widget.model.set_value("strawberry")
 
-                ui.Line(height = 6)
-                with ui.HStack(height = 20):
-                    ui.Label("Fruit:", width = 50)
-                    # self.fruit_name_widget = ui.StringField(width = 100)
-                    # self.fruit_name_widget.model.set_value("strawberry")
+                        self.fruit_name_widget = ui.ComboBox(
+                            0, *FRUIT_LIST,
+                            name="dropdown_menu",
+                            # Abnormal height because this "transparent" combobox
+                            # has to fit inside the Rectangle behind it
+                            height=10
+                        )
 
-                    self.fruit_name_widget = ui.ComboBox(
-                        0, *FRUIT_LIST,
-                        name="dropdown_menu",
-                        # Abnormal height because this "transparent" combobox
-                        # has to fit inside the Rectangle behind it
-                        height=10
-                    )
+                        ui.Label("Size:", width = 50)
+                        self.fruit_size_widget = ui.FloatField(width = 50)
+                        self.fruit_size_widget.model.set_value(1e-4)
+                        ui.Label("Num:", width = 50)
+                        self.fruit_num_widget = ui.IntField(width = 50)
+                        self.fruit_num_widget.model.set_value(10)
 
-                    ui.Label("Size:", width = 50)
-                    self.fruit_size_widget = ui.FloatField(width = 50)
-                    self.fruit_size_widget.model.set_value(1e-4)
-                    ui.Label("Num:", width = 50)
-                    self.fruit_num_widget = ui.IntField(width = 50)
-                    self.fruit_num_widget.model.set_value(10)
-
-                with ui.HStack(height = 40): 
-                    ui.Button("Add Fruit", clicked_fn=self.fruit_add)
-                    ui.Button("Delete Fruit", clicked_fn=self.fruit_delete)
-                ui.Line(height = 6)
-                ui.Button("Add Fluid", height = 40, clicked_fn=self.fluid_test)
+                    with ui.HStack(height = 40): 
+                        ui.Button("Add Fruit", clicked_fn=self.fruit_add)
+                        ui.Button("Delete Fruit", clicked_fn=self.fruit_delete)
+                    ui.Line(height = 6)
+                    ui.Button("Add Fluid", height = 40, clicked_fn=self.fluid_test)
 
                 ui.Line(height = 2)
                 ui.Button("Register Physics Event", height = 50, clicked_fn=self.register_physics_event)
@@ -142,6 +146,10 @@ class DblForBlendidExtension(omni.ext.IExt):
                     ui.Label("RMP Config Path:", width = 200)
                     self.rmp_config_path_widget = ui.StringField(width = 300)
                     self.rmp_config_path_widget.model.set_value("kinova_rmpflow/config7.json")
+                with ui.HStack(height = 20): 
+                    ui.Label("Gripper type:", width = 200)
+                    self.gripper_type_widget = ui.StringField(width = 300)
+                    self.gripper_type_widget.model.set_value("robotiq85")
                 
 
                
@@ -222,11 +230,12 @@ class DblForBlendidExtension(omni.ext.IExt):
         # set robot
         prim_path = self.robot_path_widget.model.as_string
         end_effector_path = self.ee_path_widget.model.as_string
+        gripper_type = self.gripper_type_widget.model.as_string
         self.robot = MyRobot(prim_path = prim_path, 
                              end_effector_path=end_effector_path,
-                             gripper_dof_names=ROBOT_CONFIG["gripper_dof_names"],
-                             gripper_open_position=ROBOT_CONFIG["gripper_open_position"],
-                             gripper_closed_position=ROBOT_CONFIG["gripper_closed_position"],)
+                             gripper_dof_names=ROBOT_CONFIG[gripper_type]["gripper_dof_names"],
+                             gripper_open_position=ROBOT_CONFIG[gripper_type]["gripper_open_position"],
+                             gripper_closed_position=ROBOT_CONFIG[gripper_type]["gripper_closed_position"],)
         self.robot.initialize()
         print("robot_info", self.robot.num_dof)
         print("robot_dof_names", len(self.robot.dof_names), self.robot.dof_names)
@@ -350,116 +359,14 @@ class DblForBlendidExtension(omni.ext.IExt):
             #  pick_up_blender
             from .ur3e.action_config import action_config
 
-            self.controller.apply_high_level_action(action_config["pick_up_blender"]) 
+            self.controller.apply_high_level_action(action_config["low_level_test"]) 
+            
 
-            # place_action = action_config["place_blender_to_point"]
-            # place_action["base_prim"] = "/World/WorkingArea/FruitArea/FruitPoint0"
-            # place_action["base_prim"] = "/World/WorkingArea/LiquidArea/LiquidPoint"
-            # self.controller.apply_high_level_action(place_action)
-            # self.controller.apply_high_level_action("place_blender_to_blending_point")     
-             
-            # pick_cup_action = action_config["pick_up_cup"] 
-            # pick_cup_action["base_prim"] = "/World/Cup/cup_01"
-            # self.controller.apply_high_level_action(action_config["pick_up_cup"])            
-            # self.controller.apply_high_level_action(action_config["place_cup"])
-
-            # pour_action = action_config["pour"] 
-            # pour_action["base_prim"] = "/World/Cup/Xform"
-            # self.controller.apply_high_level_action(pour_action)  
-    
     def debug2(self):
         print("debug2")
-        # from omni.isaac.orbit.robots.config.franka import FRANKA_PANDA_ARM_WITH_PANDA_HAND_CFG
-        # from omni.isaac.orbit.robots.config.universal_robots import UR10_CFG
-        # from omni.isaac.orbit.robots.single_arm import SingleArmManipulator
+        from omni.isaac.core.utils.types import ArticulationAction
 
-        # robot_cfg = UR10_CFG
-        # print("robot_cfg", robot_cfg.meta_info)
-        # robot = SingleArmManipulator(cfg=robot_cfg)
-        # robot.spawn("/World/Robot_1", translation=(0.0, -1.0, 0.0))
-        # robot.spawn("/World/Robot_2", translation=(0.0, 1.0, 0.0))
-        
-        # # print("UR10_CFG", UR10_CFG)
-
-        # self._ext_manager = omni.kit.app.get_app().get_extension_manager()
-        # self._ext_manager.set_extension_enabled_immediate("omni.isaac.orbit", True)
-
-        # from omni.isaac.orbit.sensors.camera import Camera, PinholeCameraCfg
-        # import omni.replicator.core as rep
-
-        # camera_cfg = PinholeCameraCfg(
-        #     sensor_tick=0,
-        #     height=180,
-        #     width=320,
-        #     data_types=["rgb", "distance_to_image_plane", "normals", "distance_to_camera"],
-        #     usd_params=PinholeCameraCfg.UsdCameraCfg(clipping_range=(0.1, 1.0e5)),
-        # )
-        # camera = Camera(cfg=camera_cfg, device="cpu")
-        # # camera.spawn("/OmniverseKit_Persp")
-
-        # # Initialize sensor
-        # camera.initialize("/OmniverseKit_Persp")
-
-        # # Create replicator writer
-        # rep_writer = rep.BasicWriter(output_dir="what", frame_padding=3)
-
-
-        # # update camera
-        # camera.update( 1 / 60.0 )
-        # print("camera.data.output", camera.data.output['rgb'])
-
-        # # Save images
-        # rep_writer.write(camera.data.output)
-
-        # import omni.renderer_capture
-        # capture_next_frame = omni.renderer_capture.acquire_renderer_capture_interface().capture_next_frame_swapchain
-        # wait_async_capture = omni.renderer_capture.acquire_renderer_capture_interface().wait_async_capture
-
-
-        # viewport_api = get_active_viewport(self._usd_context)
-        # # Wait until the viewport has valid resources
-        # await viewport_api.wait_for_rendered_frames()
 
 
     def render_image(self):
-        from omni.kit.capture.viewport import CaptureOptions, CaptureExtension
-        import os
-        from datetime import datetime
-        import pathlib
-
-        def make_sure_directory_existed(directory):
-            if not os.path.exists(directory):
-                try:
-                    os.makedirs(directory, exist_ok=True)
-                except OSError as error:
-                    carb.log_warn(f"Directory cannot be created: {dir}")
-                    return False
-            return True
-
-        def clean_files_in_directory(directory, suffix):
-            if not os.path.exists(directory):
-                return
-            images = os.listdir(directory)
-            for item in images:
-                if item.endswith(suffix):
-                    os.remove(os.path.join(directory, item))
-
-        capture_filename = "capture_png_test"
-        filePath = pathlib.Path("I:\\Temp").joinpath(capture_filename)
-        options = CaptureOptions()
-        options.file_type = ".png"
-        options.output_folder = str(filePath)
-        make_sure_directory_existed(options.output_folder)
-        # clean_files_in_directory(options.output_folder, ".png")
-        now = datetime.now() # current date and time
-        date_time = now.strftime("%m/%d/%Y, %H:%M:%S")
-        exr_path = os.path.join(options._output_folder, f"{date_time}.png")
-        carb.log_warn(f"Capture image path: {exr_path}")
-        options.hdr_output = False
-        options.camera = "/OmniverseKit_Persp"
-
-        capture_instance = CaptureExtension().get_instance()
-        capture_instance.options = options
-        capture_instance.start()
-
-        # capture_next_frame("1.png")
+       print("render_image")
