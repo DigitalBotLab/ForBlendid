@@ -150,18 +150,19 @@ class DblForBlendidExtension(omni.ext.IExt):
                     self.robot_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova")
 
                 with ui.CollapsableFrame("Robot Config", height = 0, collapsed=True):
-                    with ui.HStack(height = 20): 
-                        ui.Label("EE Prim Path:", width = 200)
-                        self.ee_path_widget = ui.StringField(width = 300)
-                        self.ee_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova/robotiq_85_base_link")
-                    with ui.HStack(height = 20): 
-                        ui.Label("RMP Config Path:", width = 200)
-                        self.rmp_config_path_widget = ui.StringField(width = 300)
-                        self.rmp_config_path_widget.model.set_value("kinova_rmpflow/config7.json")
-                    with ui.HStack(height = 20): 
-                        ui.Label("Gripper type:", width = 200)
-                        self.gripper_type_widget = ui.StringField(width = 300)
-                        self.gripper_type_widget.model.set_value("robotiq85")
+                    with ui.VStack():
+                        with ui.HStack(height = 20): 
+                            ui.Label("EE Prim Path:", width = 200)
+                            self.ee_path_widget = ui.StringField(width = 300)
+                            self.ee_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova/robotiq_85_base_link")
+                        with ui.HStack(height = 20): 
+                            ui.Label("RMP Config Path:", width = 200)
+                            self.rmp_config_path_widget = ui.StringField(width = 300)
+                            self.rmp_config_path_widget.model.set_value("kinova_rmpflow/config7.json")
+                        with ui.HStack(height = 20): 
+                            ui.Label("Gripper type:", width = 200)
+                            self.gripper_type_widget = ui.StringField(width = 300)
+                            self.gripper_type_widget.model.set_value("robotiq85")
                 
 
                
@@ -370,12 +371,12 @@ class DblForBlendidExtension(omni.ext.IExt):
         current_directory = os.path.dirname(os.path.abspath(__file__))
         print("current dir:", current_directory)
         if self.controller:
-            pass
-            #@ from .ur3e.action_config import action_config
-
             action_config = json.load(open(os.path.join(current_directory, "task/kinova_action.json"), "r"))
             # self.controller.apply_high_level_action(action_config["low_level_test"]) 
-            self.controller.apply_high_level_action(action_config["go_home_low_level"]) 
+            self.controller.apply_high_level_action(action_config["go_home"]) 
+            pick_up_action = action_config["pick_up"]
+            pick_up_action["base_prim"] = "/World/glass"
+            self.controller.apply_high_level_action(pick_up_action)
             
 
     def debug2(self):
