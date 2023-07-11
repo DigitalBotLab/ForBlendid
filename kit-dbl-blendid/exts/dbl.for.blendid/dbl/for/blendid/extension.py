@@ -35,7 +35,7 @@ class DblForBlendidExtension(omni.ext.IExt):
         self._window_robot_control.frame.style = julia_modeler_style
         with self._window_robot_control.frame:
             with ui.VStack():
-                with ui.CollapsableFrame("PLAY", collapsed=False):
+                with ui.CollapsableFrame("PLAY", collapsed=True, height = 0):
                     with ui.VStack(height=0, spacing=0):
                         ui.Line(style_type_name_override="HeaderLine") 
                         ui.Spacer(height = 12)
@@ -145,6 +145,11 @@ class DblForBlendidExtension(omni.ext.IExt):
                 ui.Line(height = 2)
                 ui.Button("Register Physics Event", height = 50, clicked_fn=self.register_physics_event)
                 with ui.HStack(height = 20): 
+                    ui.Label("connect to server:", width = 200)
+                    self.server_widget = ui.CheckBox(width=20, height = 20)
+                
+                with ui.HStack(height = 20): 
+                 
                     ui.Label("Robot Prim Path:", width = 200)
                     self.robot_path_widget = ui.StringField(width = 300)
                     self.robot_path_widget.model.set_value("/World/kinova_gen3_7_hand/kinova")
@@ -256,9 +261,10 @@ class DblForBlendidExtension(omni.ext.IExt):
 
         # set controller
         rmp_config_path = self.rmp_config_path_widget.model.as_string
+        connect_server = self.server_widget.model.as_bool
         self.controller = MyController(name=prim_path, 
                                        robot=self.robot, 
-                                       connect_server=False, 
+                                       connect_server=connect_server, 
                                        config_path=rmp_config_path)
         
 
