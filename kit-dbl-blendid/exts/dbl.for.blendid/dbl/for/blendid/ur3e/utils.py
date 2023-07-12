@@ -57,6 +57,9 @@ def regulate_degree(degree: float, min_value: float = 0, max_value: float = 360,
     elif degree > max_value:
         degree -= 360
     
+    # format degree to 3 decimal places
+    degree = round(degree, 3)
+
     return degree
 
 

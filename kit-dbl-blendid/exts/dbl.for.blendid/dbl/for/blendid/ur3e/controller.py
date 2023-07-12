@@ -48,9 +48,11 @@ class MyController(BaseController):
 
         # connection
         self.connect_server = connect_server
-        # if connect_server:
-        #     self.client = KinovaClient()
-        #     self.sending_message = False
+        if connect_server:
+            assert "kinova" in name, "Only kinova controller can connect to the server"
+            from .kinova_rmpflow.kinova_socket import KinovaClient
+            self.client = KinovaClient()
+            self.sending_message = False
 
        
         # add go home default action
@@ -169,6 +171,10 @@ class MyController(BaseController):
         # update event
         if len(self.event_pool) > 0:
             if self.event_elapsed <= 0:
+                
+                if self.connect_server:
+                    self.synchronize_robot()
+
                 event, elapsed, ee_pos, ee_ori, gripper_ratio = self.event_pool.pop(0)
                 print("event, elapsed, ee_pos, ee_ori ", event, elapsed, ee_pos, ee_ori, gripper_ratio)
                 self.update_event(event)
@@ -182,8 +188,7 @@ class MyController(BaseController):
                 elif self.event == "low_level":
                     self.update_joint_target(ee_pos) # here ee_pos is joint positions
 
-                if self.connect_server:
-                    self.synchronize_robot()
+                
 
                 
         else:
@@ -238,7 +243,7 @@ class MyController(BaseController):
         elif self.event == "low_level":
             joint_positions = self.robot.get_joint_positions()
             a = 1 - self.event_elapsed / 200
-            print("joint_positions", len(joint_positions), "joint_target", len(self.joint_target))
+            # print("joint_positions", len(joint_positions), "joint_target", len(self.joint_target))
             joint_positions[:(self.robot.num_dof-self.robot.gripper._gripper_joint_num)] =  self.joint_target[:(self.robot.num_dof-self.robot.gripper._gripper_joint_num)] # self.get_joint_target(a)
             # self.robot._articulation_view._physics_view.set_dof_position_targets(joint_positions, np.arange(6))
             # self.robot.set_joint_positions(joint_positions, np.arange(len(joint_positions)))
@@ -270,26 +275,26 @@ class MyController(BaseController):
 
         # return actions
 
-    ################################## sync robot ##################################
-    # def synchronize_robot(self):
-    #     """
-    #     Send message to the Server to 
-    #     """
-    #     if not self.sending_message:
-    #         # get joint positions and gripper degree
-    #         all_positions = self.robot.get_joint_positions()
-    #         gripper_degree = all_positions[7] / 0.8757
-    #         joint_positions = [regulate_degree(e, indegree=False) for e in all_positions[:7]]
-    #         joint_positions = joint_positions + [gripper_degree]
+    ################################# sync robot ##################################
+    def synchronize_robot(self):
+        """
+        Send message to the Server to 
+        """
+        if not self.sending_message:
+            # get joint positions and gripper degree
+            all_positions = self.robot.get_joint_positions()
+            gripper_degree = all_positions[7] / 0.8757
+            joint_positions = [regulate_degree(e, indegree=False) for e in all_positions[:7]]
+            joint_positions = joint_positions + [gripper_degree]
 
-    #         assert len(joint_positions) == 8, "Invalid number of joint positions"
+            assert len(joint_positions) == 8, "Invalid number of joint positions"
 
-    #         # send message
-    #         message = " ".join([str(e) for e in joint_positions])
+            # send message
+            message = " ".join([str(e) for e in joint_positions])
         
-    #         self.sending_message = True
-    #         self.client.send_message("Control", message)
-    #         self.sending_message = False
+            self.sending_message = True
+            self.client.send_message("Control", message)
+            self.sending_message = False
 
     # def obtain_robot_state(self):
     #     """

@@ -220,6 +220,7 @@ class DblForBlendidExtension(omni.ext.IExt):
 
         self._tensor_started = True
         self.set_robot()
+        
         return True 
     
     def _on_physics_step(self, dt):
@@ -266,7 +267,11 @@ class DblForBlendidExtension(omni.ext.IExt):
                                        robot=self.robot, 
                                        connect_server=connect_server, 
                                        config_path=rmp_config_path)
-        
+        # load action config
+        if "kinova" in prim_path:
+            current_directory = os.path.dirname(os.path.abspath(__file__))
+            self.action_config = json.load(open(os.path.join(current_directory, "task/kinova_action.json"), "r"))
+
 
     def update_ee_target(self):
         print("update_ee_target")
@@ -374,20 +379,17 @@ class DblForBlendidExtension(omni.ext.IExt):
 
     def debug(self):
         print("debug")
-        current_directory = os.path.dirname(os.path.abspath(__file__))
-        print("current dir:", current_directory)
         if self.controller:
-            action_config = json.load(open(os.path.join(current_directory, "task/kinova_action.json"), "r"))
-            # self.controller.apply_high_level_action(action_config["low_level_test"]) 
-            self.controller.apply_high_level_action(action_config["go_home"]) 
-            pick_up_action = action_config["pick_up"]
-            pick_up_action["base_prim"] = "/World/glass"
-            self.controller.apply_high_level_action(pick_up_action)
+            # FIXME: wait for robot to be ready
+            self.controller.apply_high_level_action(self.action_config["go_home"])
             
 
     def debug2(self):
         print("debug2")
-        from omni.isaac.core.utils.types import ArticulationAction
+        if self.controller:
+            pick_up_action = self.action_config["pick_up"]
+            pick_up_action["base_prim"] = "/World/glass"
+            self.controller.apply_high_level_action(pick_up_action)
 
 
 
