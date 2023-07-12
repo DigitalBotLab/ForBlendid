@@ -11,9 +11,9 @@ joint_limit_buffers: [.01, .01, .01, .01, .01, .01, .01]
 # Note: metric_weight and metric_scalar mean the same thing. Set to zero to turn it off.
 rmp_params:
     cspace_target_rmp:
-        metric_scalar: 50.
-        position_gain: 100.
-        damping_gain: 50.
+        metric_scalar: 0.5
+        position_gain: 1
+        damping_gain: 500.
         robust_position_term_thresh: .5
         inertia: 0.
     cspace_trajectory_rmp: # Note: unused
