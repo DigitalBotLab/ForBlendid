@@ -425,7 +425,7 @@ class DblForBlendidExtension(omni.ext.IExt):
                                           camera_prim_path="/World/Camera",
                                           vision_model="fastsam")
 
-        self.vision_helper.obtain_camera_transform(camara_path="/World/Camera")
+        
         camera_pos = self.vision_helper.camera_mat.ExtractTranslation()
         print("camera offset", camera_pos)
         foc = 1000
@@ -442,7 +442,7 @@ class DblForBlendidExtension(omni.ext.IExt):
 
         from .vision.vision_helper import VisionHelper
         self.vision_helper = VisionHelper(vision_url="http://127.0.0.1:7860/run/predict", 
-                                          vision_folder="I:\\Temp",
+                                          vision_folder="I:\\Temp\\VisionTest",
                                           camera_prim_path="/World/Camera",
                                           vision_model="sam")
 
@@ -467,29 +467,14 @@ class DblForBlendidExtension(omni.ext.IExt):
         assert img_path, "image not found"
         print("img_path:", img_path)
         image = cv2.imread(img_path)
-        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        center_x, center_y = self.vision_helper.get_color_center(
+            image,
+            lower_color=[150, 50, 50], # [0, 0, 150], # 
+            upper_color=[179, 255, 255], # [180, 20, 200]
+            contour_bound=[[375, 300], [275, 720], [950, 720], [775, 300]]
+        )
 
-        lower_color = np.array([150, 50, 50])   
-        upper_color = np.array([179, 255, 255])
-        mask = cv2.inRange(hsv_image, lower_color, upper_color)
-        kernel = np.ones((5, 5), np.uint8)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)  
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        assert len(contours) > 0, "contour not found"
-        largest_contour = max(contours, key=cv2.contourArea)
-        M = cv2.moments(largest_contour)
-        center_x = int(M['m10'] / M['m00'])
-        center_y = int(M['m01'] / M['m00'])
         print("Center Position: ({}, {})".format(center_x, center_y))
-
-        # contour = largest_contour
-        # arclen = cv2.arcLength(contour, True)
-        # # WARNING: 0.005 is a magic number
-        # contour = cv2.approxPolyDP(contour, arclen*0.005, True)
-        # cv2.drawContours(image, [contour], -1, (0, 255, 0), 2)  # Green color, thickness 2
-
-        # print("contour:", contour, len(contour))
 
         import requests
         import base64
@@ -552,10 +537,8 @@ class DblForBlendidExtension(omni.ext.IExt):
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-
         #REFERENCE: Camera Calibration and 3D Reconstruction from Single Images Using Parallelepipeds
 
-        self.vision_helper.obtain_camera_transform(camara_path="/World/Camera")
         camera_pos = self.vision_helper.camera_mat.ExtractTranslation()
         print("camera offset", camera_pos)
         bottom_d = self.vision_helper.get_world_direction_from_camera_point(bottom_point[0], 720 - bottom_point[1])

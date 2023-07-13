@@ -17,6 +17,7 @@ from PIL import Image
 import requests
 import base64
 import os
+import numpy as np
 
 import omni.usd
 import carb 
@@ -36,7 +37,8 @@ class VisionHelper():
                  vision_url: str, 
                  vision_folder:str, 
                  camera_prim_path = "/OmniverseKit_Persp",
-                 vision_model = "dino") -> None:
+                 vision_model = "dino",
+                 image_name = "test.png") -> None:
         # vision
         self.vision_url = vision_url
         self.vision_folder = vision_folder
@@ -45,6 +47,10 @@ class VisionHelper():
         
         # stage
         self.stage = omni.usd.get_context().get_stage()
+        self.image_name = image_name
+
+        # get camera transform
+        self.obtain_camera_transform()
 
     def get_prediction_data(self, image_file: str, object_name: str):
         """
@@ -72,7 +78,7 @@ class VisionHelper():
         # print(response_data)
         return response_data
     
-    def get_image_from_webcam(self, image_name = "0.jpg"):
+    def get_image_from_webcam(self):
         """
         Get image from webcam
         """
@@ -80,15 +86,15 @@ class VisionHelper():
         ret, frame = cap.read()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         image = Image.fromarray(frame, 'RGB')
-        image.save(self.vision_folder + f"/{image_name}")
-        print("Image saved at path: " + self.vision_folder + f"/{image_name}")
+        image.save(self.vision_folder + f"/{self.image_name}")
+        print("Image saved at path: " + self.vision_folder + f"/{self.image_name}")
         cap.release()
         
-    def obtain_camera_transform(self, camara_path: str):
+    def obtain_camera_transform(self):
         """
         Obtain camera transform
         """
-        camera_prim = omni.usd.get_context().get_stage().GetPrimAtPath(camara_path)
+        camera_prim = omni.usd.get_context().get_stage().GetPrimAtPath(self.camera_prim_path)
         xformable = UsdGeom.Xformable(camera_prim)
         self.camera_mat = xformable.ComputeLocalToWorldTransform(0)
         
@@ -145,6 +151,55 @@ class VisionHelper():
         get_physx_scene_query_interface().raycast_all(t, d, 100.0, report_all_hits)
 
         return hit_position
+    
+    def get_color_center(self, 
+                    image,
+                    lower_color = [150, 50, 50], 
+                    upper_color = [179, 255, 255],
+                    contour_bound = [[0, 0],[0, 720], [1280, 720], [1280, 0]]):
+
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        lower_color = np.array(lower_color)   
+        upper_color = np.array(upper_color)
+        mask = cv2.inRange(hsv_image, lower_color, upper_color)
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)  
+        
+        filtered_image = cv2.bitwise_and(image, image, mask=mask)
+        cv2.imshow('Selected color mask', filtered_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        assert len(contours) > 0, "contour not found"
+
+        cv2.drawContours(filtered_image, contours, -1, (255, 255, 255), 2)
+        cv2.imshow('Contours', filtered_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
+        contour_bound = np.array(contour_bound)
+        largest_area = 0
+        x, y = None, None
+        for contour in contours:
+            # largest_contour = max(contours, key=cv2.contourArea)
+            contour_area = cv2.contourArea(contour)
+            
+            M = cv2.moments(contour)
+            center_x = int(M['m10'] / M['m00'])
+            center_y = int(M['m01'] / M['m00'])
+            distance = cv2.pointPolygonTest(contour_bound, (center_x, center_y), False)
+            # print("contour_area:", contour_area, center_x, center_y, distance)
+            if distance > 0:
+                if contour_area > largest_area:
+                    x, y = center_x, center_y
+                    largest_area = contour_area
+
+        
+        return x, y
         
     ############################################# action #############################################
     def capture_image(self, folder_path = "I:\\Temp\\VisionTest", image_name = "test"):
