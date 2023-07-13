@@ -17,7 +17,7 @@ class MyController(BaseController):
     def __init__(self, name: str, robot: MyRobot, 
                  config_path: str = "ur3e_rmpflow/config.json",
                  connect_server = False, 
-                 allow_ui_control = True) -> None: 
+                 allow_ui_control = False) -> None: 
         BaseController.__init__(self, name=name)
 
         # env
@@ -36,8 +36,8 @@ class MyController(BaseController):
                                                )
         
         # TODO：find height
-        self.ee_pos_target = np.array([0.4, 0.2, 0.3])
-        self.ee_ori_target = np.array([0.0, -1, 0, 0])
+        self.ee_pos_target = np.array([0.45, 0.0, 0.43])
+        self.ee_ori_target = np.array([0.5, 0.5, 0.5, 0.5])
         self.joint_target = np.zeros(self.robot.num_dof)
 
         # ui controller
