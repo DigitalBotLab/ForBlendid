@@ -9,10 +9,12 @@ def find_bottom_point(points):
     Find the bottom point from a list of points
     """
     bottom_point = points[0]
-    for point in points:
+    bottom_idx = 0
+    for c, point in enumerate(points):
         if point[1] > bottom_point[1]:
             bottom_point = point
-    return bottom_point
+            bottom_idx = c
+    return bottom_point, bottom_idx
 
 def find_left_point(points):
     """

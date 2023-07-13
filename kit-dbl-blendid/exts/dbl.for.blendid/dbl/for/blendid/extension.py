@@ -112,6 +112,7 @@ class DblForBlendidExtension(omni.ext.IExt):
                 with ui.HStack(height = 40):
                     ui.Button("Debug", clicked_fn=self.debug)
                     ui.Button("Debug2", clicked_fn=self.debug2)
+                    ui.Button("Debug Draw Vision", clicked_fn = self.draw_vision)
                 
                 
                 with ui.CollapsableFrame("Fruit Test", height = 0, collapsed=True):
@@ -374,24 +375,6 @@ class DblForBlendidExtension(omni.ext.IExt):
             pour_action = action_config["pour"] 
             pour_action["base_prim"] = "/World/Cup/Xform"
             self.controller.apply_high_level_action(pour_action)  
-    
-    ################################ debug ####################################################
-
-    def debug(self):
-        print("debug")
-        if self.controller:
-            # FIXME: wait for robot to be ready
-            self.controller.apply_high_level_action(self.action_config["go_home"])
-            
-
-    def debug2(self):
-        print("debug2")
-        if self.controller:
-            pick_up_action = self.action_config["pick_up"]
-            pick_up_action["base_prim"] = "/World/glass"
-            self.controller.apply_high_level_action(pick_up_action)
-
-
 
     def record_control(self):
         print("record_control")
@@ -415,3 +398,175 @@ class DblForBlendidExtension(omni.ext.IExt):
             }
             action_config.update(new_action)
             json.dump(action_config, open(os.path.join(current_directory, action_config_path), "w"), indent=4)
+    
+    ################################ debug ####################################################
+
+    def debug(self):
+        print("debug")
+        if self.controller:
+            # FIXME: wait for robot to be ready
+            self.controller.apply_high_level_action(self.action_config["go_home"])
+            
+
+    def debug2(self):
+        print("debug2")
+        if self.controller:
+            pick_up_action = self.action_config["pick_up"]
+            pick_up_action["base_prim"] = "/World/glass"
+            self.controller.apply_high_level_action(pick_up_action)
+
+    def draw_vision(self):
+        # print("draw_vision2")
+
+        from .vision.vision_helper import VisionHelper
+        self.vision_helper = VisionHelper(vision_url="http://127.0.0.1:7860/run/predict", 
+                                          vision_folder="I:\\Temp",
+                                          camera_prim_path="/World/Camera",
+                                          vision_model="fastsam")
+
+        # self.vision_helper.capture_image(folder_path="I:\\Temp\\VisionTest", image_name="test") 
+        # return
+
+        import cv2
+        import os
+        import numpy as np
+        from pxr import Gf
+
+        from .vision.utils import find_bottom_point, find_left_point, get_projection, get_box_transform_from_point
+
+        img_path = None
+        print("os.listdir", os.listdir("I:\\Temp\\VisionTest"))
+        for item in os.listdir("I:\\Temp\\VisionTest"):
+            print("item:", item)
+            if item.endswith(".png") and item.startswith("test"):
+                img_path = os.path.join("I:\\Temp\\VisionTest", item)
+                break
+        
+        assert img_path, "image not found"
+        print("img_path:", img_path)
+        image = cv2.imread(img_path)
+        hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        lower_color = np.array([150, 50, 50])   
+        upper_color = np.array([179, 255, 255])
+        mask = cv2.inRange(hsv_image, lower_color, upper_color)
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)  
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        assert len(contours) > 0, "contour not found"
+        largest_contour = max(contours, key=cv2.contourArea)
+        M = cv2.moments(largest_contour)
+        center_x = int(M['m10'] / M['m00'])
+        center_y = int(M['m01'] / M['m00'])
+        print("Center Position: ({}, {})".format(center_x, center_y))
+
+        # contour = largest_contour
+        # arclen = cv2.arcLength(contour, True)
+        # # WARNING: 0.005 is a magic number
+        # contour = cv2.approxPolyDP(contour, arclen*0.005, True)
+        # cv2.drawContours(image, [contour], -1, (0, 255, 0), 2)  # Green color, thickness 2
+
+        # print("contour:", contour, len(contour))
+
+        import requests
+        import base64
+        import json
+        
+        # Define the URL of the Gradio server
+        url = "http://127.0.0.1:7860/run/predict"
+
+        # Define the input text
+        text = "Hello, Gradio!"
+
+        # Define the request headers and data
+        headers = {"Content-Type": "application/json"}
+
+        image_file = img_path
+
+        # Set the request payload
+        with open(image_file, "rb") as f:
+            encoded_string = base64.b64encode(f.read())
+
+        data_byte = "data:image/png;base64," + encoded_string.decode("utf-8")
+
+        # Send the request to the Gradio server
+        response = requests.post(url, json={
+            "data": [
+                data_byte, center_x, center_y
+            ]
+        })
+
+        # Get the response data as a Python object
+        response_data = response.json()
+        print("response_data", response_data)
+
+        # response_data = self.vision_helper.get_prediction_data("I:\\Temp\\0.jpg", "grey tea tower")
+        # print(response_data)
+
+        # response_data =  {'data': ['[[[[736, 113]], [[608, 133]], [[591, 151]], [[590, 373]], [[620, 419]], [[646, 419]], [[741, 392]], [[790, 162]]]]'], 'is_generating': False, 'duration': 11.769976139068604, 'average_duration': 11.769976139068604}
+        # import json
+        # import numpy as np
+        contour = json.loads(response_data["data"][0])
+
+        print("countour", contour)
+        points = np.array([p[0] for p in contour])
+        print("p0", points)
+
+        
+        bottom_point, bottom_idx = find_bottom_point(points)
+        left_point = points[bottom_idx - 1 if bottom_idx > 0 else len(points) - 1]
+        right_point = points[bottom_idx + 1 if bottom_idx < len(points) - 1 else 0]
+        print("bottom_point", bottom_point)
+
+        # for i, point in enumerate(points):
+            # image = cv2.circle(image, point, radius=10, color=(30 * (i + 1), 30 * (i + 1), 30 * (i + 1)), thickness=-1)
+        
+        image = cv2.circle(image, bottom_point, radius=10, color=(255, 0, 255), thickness=-1)
+        image = cv2.circle(image, left_point, radius=10, color=(255, 255, 0), thickness=-1)
+        image = cv2.circle(image, right_point, radius=10, color=(0, 255, 255), thickness=-1)
+        
+        cv2.imshow('Selected Contours', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
+        #REFERENCE: Camera Calibration and 3D Reconstruction from Single Images Using Parallelepipeds
+
+        self.vision_helper.obtain_camera_transform(camara_path="/World/Camera")
+        camera_pos = self.vision_helper.camera_mat.ExtractTranslation()
+        print("camera offset", camera_pos)
+        foc = 910
+        bottom_d = self.vision_helper.get_world_direction_from_camera_point(bottom_point[0], 720 - bottom_point[1], foc, foc)
+        bottom_d= bottom_d.GetNormalized()
+        print("bottom_d:", bottom_d)
+
+        left_d = self.vision_helper.get_world_direction_from_camera_point(left_point[0], 720 - left_point[1], foc, foc)
+        left_d= left_d.GetNormalized()
+        print("left_d:", left_d)
+
+        self.vision_helper.draw_debug_line(camera_pos, left_d, length=10)
+        # self.vision_helper.get_hit_position(t, world_d, target_prim_path="/World/Desk")
+
+        return
+
+        box_transform, box_rotation = get_box_transform_from_point(camera_pos, bottom_d, left_d, affordance_z = -0.02)
+        print("box_transform:", box_transform)
+        print("box_rotation:", box_rotation)
+
+        stage = omni.usd.get_context().get_stage()
+        stage.DefinePrim("/World/box", "Xform")
+        mat = Gf.Matrix4d().SetScale(1) * \
+               Gf.Matrix4d().SetRotate(box_rotation) * \
+                Gf.Matrix4d().SetTranslate(Gf.Vec3d(box_transform[0], box_transform[1], box_transform[2]))
+        
+        omni.kit.commands.execute(
+            "TransformPrimCommand",
+            path="/World/box",
+            new_transform_matrix=mat,
+        )
+
+
+
+
+ 
