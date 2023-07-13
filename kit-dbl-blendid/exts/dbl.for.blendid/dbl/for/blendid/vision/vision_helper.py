@@ -27,8 +27,9 @@ import omni.graph.core as og
 from omni.physx import get_physx_scene_query_interface
 from omni.debugdraw import get_debug_draw_interface
 
-CX = 1920/2 # principal point x
-CY = 1080/2 # principal point y
+CX = 1280/2 # principal point x
+CY = 720/2 # principal point y
+FOC = 1100 # focal length
 
 class VisionHelper():
     def __init__(self, 
@@ -91,7 +92,7 @@ class VisionHelper():
         xformable = UsdGeom.Xformable(camera_prim)
         self.camera_mat = xformable.ComputeLocalToWorldTransform(0)
         
-    def get_world_direction_from_camera_point(self, x, y, fx, fy):
+    def get_world_direction_from_camera_point(self, x, y, fx=FOC, fy=FOC):
         """
         Get world direction from camera point
         """

@@ -71,3 +71,24 @@ def get_box_transform_from_point(camera_position, bottom_direction, left_directi
 
     return center_point, rotation.GetQuat()
 
+def get_box_transform_from_point2(camera_position, bottom_direction, left_direction, right_direction, affordance_z = 0):
+    """
+    Get box points
+    """
+    bottom_point = get_projection(camera_position, bottom_direction, affordance_z)
+    left_point = get_projection(camera_position, left_direction, affordance_z)
+    right_point = get_projection(camera_position, right_direction, affordance_z)
+
+    distance_lb =  np.linalg.norm(bottom_point - left_point)
+    distance_rb =  np.linalg.norm(bottom_point - right_point)
+    print("distance: ", distance_lb, distance_rb, bottom_point, left_point, right_point)
+    
+    center_point = (left_point + left_point) / 2
+    center_point = Gf.Vec3d(center_point[0], center_point[1], center_point[2])
+
+    direction = left_point - bottom_point
+    direction = direction / np.linalg.norm(direction)
+    direction = Gf.Vec3d(direction[0], direction[1], direction[2])
+    rotation = Gf.Rotation(Gf.Vec3d(0, 1, 0), direction)
+
+    return center_point, rotation.GetQuat()

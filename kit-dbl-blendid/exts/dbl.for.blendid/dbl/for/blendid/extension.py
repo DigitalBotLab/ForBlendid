@@ -112,7 +112,9 @@ class DblForBlendidExtension(omni.ext.IExt):
                 with ui.HStack(height = 40):
                     ui.Button("Debug", clicked_fn=self.debug)
                     ui.Button("Debug2", clicked_fn=self.debug2)
+                with ui.HStack(height = 40):
                     ui.Button("Debug Draw Vision", clicked_fn = self.draw_vision)
+                    ui.Button("Camera caliberation", clicked_fn = self.camera_caliberation)
                 
                 
                 with ui.CollapsableFrame("Fruit Test", height = 0, collapsed=True):
@@ -415,14 +417,34 @@ class DblForBlendidExtension(omni.ext.IExt):
             pick_up_action["base_prim"] = "/World/glass"
             self.controller.apply_high_level_action(pick_up_action)
 
-    def draw_vision(self):
-        # print("draw_vision2")
-
+    def camera_caliberation(self):
+        print("camera_caliberation")
         from .vision.vision_helper import VisionHelper
         self.vision_helper = VisionHelper(vision_url="http://127.0.0.1:7860/run/predict", 
                                           vision_folder="I:\\Temp",
                                           camera_prim_path="/World/Camera",
                                           vision_model="fastsam")
+
+        self.vision_helper.obtain_camera_transform(camara_path="/World/Camera")
+        camera_pos = self.vision_helper.camera_mat.ExtractTranslation()
+        print("camera offset", camera_pos)
+        foc = 1000
+        bottom_d = self.vision_helper.get_world_direction_from_camera_point(1280//2, 720//2, foc, foc)
+        bottom_d= bottom_d.GetNormalized()
+        print("bottom_d:", bottom_d)
+
+        self.vision_helper.draw_debug_line(camera_pos, bottom_d, length=10)
+
+
+    def draw_vision(self):
+        # print("draw_vision2")
+        
+
+        from .vision.vision_helper import VisionHelper
+        self.vision_helper = VisionHelper(vision_url="http://127.0.0.1:7860/run/predict", 
+                                          vision_folder="I:\\Temp",
+                                          camera_prim_path="/World/Camera",
+                                          vision_model="sam")
 
         # self.vision_helper.capture_image(folder_path="I:\\Temp\\VisionTest", image_name="test") 
         # return
@@ -432,7 +454,7 @@ class DblForBlendidExtension(omni.ext.IExt):
         import numpy as np
         from pxr import Gf
 
-        from .vision.utils import find_bottom_point, find_left_point, get_projection, get_box_transform_from_point
+        from .vision.utils import find_bottom_point, get_box_transform_from_point2
 
         img_path = None
         print("os.listdir", os.listdir("I:\\Temp\\VisionTest"))
@@ -536,35 +558,43 @@ class DblForBlendidExtension(omni.ext.IExt):
         self.vision_helper.obtain_camera_transform(camara_path="/World/Camera")
         camera_pos = self.vision_helper.camera_mat.ExtractTranslation()
         print("camera offset", camera_pos)
-        foc = 910
-        bottom_d = self.vision_helper.get_world_direction_from_camera_point(bottom_point[0], 720 - bottom_point[1], foc, foc)
+        bottom_d = self.vision_helper.get_world_direction_from_camera_point(bottom_point[0], 720 - bottom_point[1])
         bottom_d= bottom_d.GetNormalized()
         print("bottom_d:", bottom_d)
 
-        left_d = self.vision_helper.get_world_direction_from_camera_point(left_point[0], 720 - left_point[1], foc, foc)
+        left_d = self.vision_helper.get_world_direction_from_camera_point(left_point[0], 720 - left_point[1])
         left_d= left_d.GetNormalized()
         print("left_d:", left_d)
 
-        self.vision_helper.draw_debug_line(camera_pos, left_d, length=10)
+        right_d = self.vision_helper.get_world_direction_from_camera_point(right_point[0], 720 - right_point[1])
+        right_d= right_d.GetNormalized()
+        print("right_d:", right_d)
+
         # self.vision_helper.get_hit_position(t, world_d, target_prim_path="/World/Desk")
 
-        return
-
-        box_transform, box_rotation = get_box_transform_from_point(camera_pos, bottom_d, left_d, affordance_z = -0.02)
-        print("box_transform:", box_transform)
+        # box_transform, box_rotation = get_box_transform_from_point(camera_pos, bottom_d, left_d, affordance_z = -0.02)
+        
+        box_position, box_rotation = get_box_transform_from_point2(camera_pos, bottom_d, left_d, right_d, affordance_z = -0.02)
+        print("box_transform:", box_position)
         print("box_rotation:", box_rotation)
 
-        stage = omni.usd.get_context().get_stage()
-        stage.DefinePrim("/World/box", "Xform")
-        mat = Gf.Matrix4d().SetScale(1) * \
+        # debug draw line
+        box_d = box_position - camera_pos
+        box_d = box_d.GetNormalized()
+        self.vision_helper.draw_debug_line(camera_pos, box_d, length=10)
+        
+
+        mat = Gf.Matrix4d().SetScale(0.01) * \
                Gf.Matrix4d().SetRotate(box_rotation) * \
-                Gf.Matrix4d().SetTranslate(Gf.Vec3d(box_transform[0], box_transform[1], box_transform[2]))
+                Gf.Matrix4d().SetTranslate(Gf.Vec3d(box_position[0], box_position[1], box_position[2]))
         
         omni.kit.commands.execute(
             "TransformPrimCommand",
-            path="/World/box",
+            path="/World/glass",
             new_transform_matrix=mat,
         )
+
+    
 
 
 
