@@ -30,7 +30,7 @@ from omni.debugdraw import get_debug_draw_interface
 
 CX = 1280/2 # principal point x
 CY = 720/2 # principal point y
-FOC = 1100 # focal length
+FOC = 680 # focal length
 
 class VisionHelper():
     def __init__(self, 
@@ -117,7 +117,9 @@ class VisionHelper():
     def get_camera_point_from_world_point(self, world_point, fx=FOC, fy=FOC):
         R = self.camera_mat.ExtractRotationMatrix()
         K = Gf.Matrix3d(fx, 0, 0, 0, fy, 0, CX, CY, 1)
-        K_inverse = K.GetInverse()
+        camera_point = (world_point * R + self.camera_mat.GetRow3(3)) * K
+
+        return camera_point
 
     
     def draw_debug_line(self, origin, direction, length = 1, node_path = "/World/PushGraph/make_array"):

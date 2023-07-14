@@ -89,7 +89,7 @@ def get_box_transform_from_point2(camera_position, bottom_direction, left_direct
     direction = left_point - bottom_point
     direction = direction / np.linalg.norm(direction)
     direction = Gf.Vec3d(direction[0], direction[1], direction[2])
-    rotation = Gf.Rotation(Gf.Vec3d(0, 1, 0), direction)
+    rotation = Gf.Rotation(Gf.Vec3d(-1, 0, 0), direction)
 
     return center_point, rotation.GetQuat()
 
