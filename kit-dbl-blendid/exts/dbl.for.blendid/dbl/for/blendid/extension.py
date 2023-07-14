@@ -405,10 +405,16 @@ class DblForBlendidExtension(omni.ext.IExt):
 
     def debug(self):
         print("debug")
-        if self.controller:
-            # FIXME: wait for robot to be ready
-            self.controller.apply_high_level_action(self.action_config["go_home"])
-            
+        # if self.controller:
+        #     # FIXME: wait for robot to be ready
+        #     self.controller.apply_high_level_action(self.action_config["go_home"])
+
+        source_points = [[344, 713], [564, 111], [754, 113]]
+        target_points = [[350, 696], [545, 116], [736, 115]]
+        from .vision.utils import get_affine_mat
+        self.affine_mat = get_affine_mat(source_points, target_points)
+        print("affine_mat", self.affine_mat)
+                  
 
     def debug2(self):
         print("debug2")
@@ -438,16 +444,15 @@ class DblForBlendidExtension(omni.ext.IExt):
 
     def draw_vision(self):
         # print("draw_vision2")
-        
+        vision_folder = "C:\\Research\\Temp" # "I:\\Temp\\VisionTest"
 
         from .vision.vision_helper import VisionHelper
         self.vision_helper = VisionHelper(vision_url="http://127.0.0.1:7860/run/predict", 
-                                          vision_folder="I:\\Temp\\VisionTest",
+                                          vision_folder=vision_folder, #"I:\\Temp\\VisionTest",
                                           camera_prim_path="/World/Camera",
                                           vision_model="sam")
 
-        # self.vision_helper.capture_image(folder_path="I:\\Temp\\VisionTest", image_name="test") 
-        # return
+        self.vision_helper.get_image_from_webcam() 
 
         import cv2
         import os
@@ -457,16 +462,20 @@ class DblForBlendidExtension(omni.ext.IExt):
         from .vision.utils import find_bottom_point, get_box_transform_from_point2
 
         img_path = None
-        print("os.listdir", os.listdir("I:\\Temp\\VisionTest"))
-        for item in os.listdir("I:\\Temp\\VisionTest"):
+        print("os.listdir", os.listdir(vision_folder))
+        for item in os.listdir(vision_folder):
             print("item:", item)
             if item.endswith(".png") and item.startswith("test"):
-                img_path = os.path.join("I:\\Temp\\VisionTest", item)
+                img_path = os.path.join(vision_folder, item)
                 break
         
         assert img_path, "image not found"
         print("img_path:", img_path)
         image = cv2.imread(img_path)
+        cv2.imshow('Original Image', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
         center_x, center_y = self.vision_helper.get_color_center(
             image,
             lower_color=[150, 50, 50], # [0, 0, 150], # 
@@ -479,16 +488,10 @@ class DblForBlendidExtension(omni.ext.IExt):
         import requests
         import base64
         import json
+
         
         # Define the URL of the Gradio server
         url = "http://127.0.0.1:7860/run/predict"
-
-        # Define the input text
-        text = "Hello, Gradio!"
-
-        # Define the request headers and data
-        headers = {"Content-Type": "application/json"}
-
         image_file = img_path
 
         # Set the request payload
@@ -500,7 +503,7 @@ class DblForBlendidExtension(omni.ext.IExt):
         # Send the request to the Gradio server
         response = requests.post(url, json={
             "data": [
-                data_byte, center_x, center_y
+                data_byte, center_x, center_y, "cuboid"
             ]
         })
 
@@ -518,7 +521,6 @@ class DblForBlendidExtension(omni.ext.IExt):
 
         print("countour", contour)
         points = np.array([p[0] for p in contour])
-        print("p0", points)
 
         
         bottom_point, bottom_idx = find_bottom_point(points)
@@ -536,6 +538,28 @@ class DblForBlendidExtension(omni.ext.IExt):
         cv2.imshow('Selected Contours', image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
+        pad = lambda x: np.hstack([x, np.ones((x.shape[0], 1))])
+        unpad = lambda x: x[:,:-1]
+        transform = lambda x: unpad(np.dot(pad(x), self.affine_mat))
+
+        bottom_point_ov = transform(np.array([bottom_point]))[0]
+        left_point_ov = transform(np.array([left_point]))[0]
+        right_point_ov = transform(np.array([right_point]))[0]
+
+        # bottom_point_ov = self.affine_mat @ np.array([bottom_point[0], bottom_point[1], 1])
+        # left_point_ov = self.affine_mat @ np.array([left_point[0], left_point[1], 1])
+        # right_point_ov = self.affine_mat @ np.array([right_point[0], right_point[1], 1])
+
+        print("bottom_point_ov", bottom_point_ov, bottom_point)
+        print("left_point_ov", left_point_ov, left_point)
+        print("right_point_ov", right_point_ov, right_point)
+
+        bottom_point = [bottom_point_ov[0], bottom_point_ov[1]]
+        left_point = [left_point_ov[0], left_point_ov[1]]
+        right_point = [right_point_ov[0], right_point_ov[1]]
+
+        
 
         #REFERENCE: Camera Calibration and 3D Reconstruction from Single Images Using Parallelepipeds
 

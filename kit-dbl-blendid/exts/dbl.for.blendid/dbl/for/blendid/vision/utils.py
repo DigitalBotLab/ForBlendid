@@ -92,3 +92,35 @@ def get_box_transform_from_point2(camera_position, bottom_direction, left_direct
     rotation = Gf.Rotation(Gf.Vec3d(0, 1, 0), direction)
 
     return center_point, rotation.GetQuat()
+
+def get_affine_mat(source_points, target_points):
+    src_points = np.array(source_points)
+    dst_points = np.array(target_points)
+    # src_homogeneous = np.hstack((src_points, np.ones((3, 1))))
+    # dst_homogeneous = np.hstack((dst_points, np.ones((3, 1))))
+    # affine_transform = np.linalg.solve(src_homogeneous, dst_homogeneous)
+    # Pad the data with ones, so that our transformation can do translations too
+    n = src_points.shape[0]
+    pad = lambda x: np.hstack([x, np.ones((x.shape[0], 1))])
+    unpad = lambda x: x[:,:-1]
+    X = pad(src_points)
+    Y = pad(dst_points)
+
+    # Solve the least squares problem X * A = Y
+    # to find our transformation matrix A
+    A, res, rank, s = np.linalg.lstsq(X, Y, rcond=None)
+    transform = lambda x: unpad(np.dot(pad(x), A))
+    print("transform", transform(src_points), dst_points)
+
+    # ret = np.linalg.lstsq(src_points, dst_points, rcond=None)
+    # affine_transform = ret[0]
+    # residual = ret[1]
+    # # affine_transform = affine_transform
+    # s0 = np.array([source_points[0][0], source_points[0][1]]) @ affine_transform + residual
+    # s1 = np.array([source_points[1][0], source_points[1][1]]) @ affine_transform + residual
+    # s2 = np.array([source_points[2][0], source_points[2][1]]) @ affine_transform + residual
+    # print("s0: ", s0, "s1: ", s1, "s2: ", s2)
+    # print("t0: ", target_points[0], "t1: ", target_points[1], "t2: ", target_points[2])
+     
+
+    return A

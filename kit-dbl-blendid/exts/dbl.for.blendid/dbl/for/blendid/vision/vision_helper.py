@@ -114,6 +114,12 @@ class VisionHelper():
 
         return world_direction 
     
+    def get_camera_point_from_world_point(self, world_point, fx=FOC, fy=FOC):
+        R = self.camera_mat.ExtractRotationMatrix()
+        K = Gf.Matrix3d(fx, 0, 0, 0, fy, 0, CX, CY, 1)
+        K_inverse = K.GetInverse()
+
+    
     def draw_debug_line(self, origin, direction, length = 1, node_path = "/World/PushGraph/make_array"):
         """
         Draw debug line
@@ -154,11 +160,15 @@ class VisionHelper():
     
     def get_color_center(self, 
                     image,
-                    lower_color = [150, 50, 50], 
-                    upper_color = [179, 255, 255],
+                    lower_color, 
+                    upper_color,
                     contour_bound = [[0, 0],[0, 720], [1280, 720], [1280, 0]]):
 
         hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+        
+        cv2.imshow('Original hsv_image Image', hsv_image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
         lower_color = np.array(lower_color)   
         upper_color = np.array(upper_color)
